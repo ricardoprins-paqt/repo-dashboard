@@ -8,12 +8,18 @@ importers:
 
   .:
     dependencies:
+      '@floating-ui/dom':
+        specifier: 1.8.0
+        version: 1.8.0
       '@fontsource/ibm-plex-sans':
         specifier: ^5.3.0
         version: 5.3.0
       '@paqtdesign/core':
         specifier: 1.8.1
         version: 1.8.1
+      '@paqtdesign/experimental':
+        specifier: 1.5.0
+        version: 1.5.0(@floating-ui/dom@1.8.0)(@paqtdesign/core@1.8.1)(lit@3.3.3)(vue@3.5.43(typescript@5.9.3))
       '@paqtdesign/nuxt':
         specifier: 1.0.0
         version: 1.0.0(@paqtdesign/core@1.8.1)(@paqtdesign/vue@1.8.1(typescript@5.9.3)(vue@3.5.43(typescript@5.9.3)))(confbox@0.3.1)(dotenv@17.4.2)(giget@3.3.1)(jiti@2.7.0)(magic-string@1.4.3)(mlly@1.8.2)(rolldown@1.2.13)(unplugin@3.4.0(esbuild@0.28.2)(rolldown@1.2.13)(rollup@4.64.5)(vite@8.3.4(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(yaml@2.9.1)))
@@ -830,6 +836,14 @@ packages:
 
   '@paqtdesign/core@1.8.1':
     resolution: {integrity: sha512-lABbo2AavYNHC1Yqrf+XKMhhL/Y1psIfuBzb6oheuC9zOnC0BtRtnJON35XZOl13BnAsQkhKdsJgzGNGWZJlCw==, tarball: https://npm.pkg.github.com/download/@paqtdesign/core/1.8.1/a440780a22f789e9eff152b3e11ff32b8035aac2}
+
+  '@paqtdesign/experimental@1.5.0':
+    resolution: {integrity: sha512-dcfNO5hv00stPiKmMOJeuDFXK50HVuBD3yX77G7+ENjNfU4ZBRZ9SZhn1PWA5En6HUh6jiwSr6o4OLKBmc/R2g==, tarball: https://npm.pkg.github.com/download/@paqtdesign/experimental/1.5.0/eb064eabf2afa7842d5c8bc582a2aa5970573ea7}
+    peerDependencies:
+      '@floating-ui/dom': ^1.7.6
+      '@paqtdesign/core': '>=1.0.0'
+      lit: ^3.0.0
+      vue: ^3.5.0
 
   '@paqtdesign/nuxt@1.0.0':
     resolution: {integrity: sha512-txfjG777OFgfqy8/BZ/MotqIN7uj8F4LRfeIz3G5awVJ68fYBC83PBwXz/7ZouoYFiEyWQMYmM6M9aehMimbwA==, tarball: https://npm.pkg.github.com/download/@paqtdesign/nuxt/1.0.0/e1e266ebf495d0a66c2ad2fe9f2021393b50bd50}
@@ -5750,6 +5764,13 @@ snapshots:
       iconify-icon: 3.0.3
       libphonenumber-js: 1.13.15
       lit: 3.3.3
+
+  '@paqtdesign/experimental@1.5.0(@floating-ui/dom@1.8.0)(@paqtdesign/core@1.8.1)(lit@3.3.3)(vue@3.5.43(typescript@5.9.3))':
+    dependencies:
+      '@floating-ui/dom': 1.8.0
+      '@paqtdesign/core': 1.8.1
+      lit: 3.3.3
+      vue: 3.5.43(typescript@5.9.3)
 
   '@paqtdesign/nuxt@1.0.0(@paqtdesign/core@1.8.1)(@paqtdesign/vue@1.8.1(typescript@5.9.3)(vue@3.5.43(typescript@5.9.3)))(confbox@0.3.1)(dotenv@17.4.2)(giget@3.3.1)(jiti@2.7.0)(magic-string@1.4.3)(mlly@1.8.2)(rolldown@1.2.13)(unplugin@3.4.0(esbuild@0.28.2)(rolldown@1.2.13)(rollup@4.64.5)(vite@8.3.4(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(yaml@2.9.1)))':
     dependencies:

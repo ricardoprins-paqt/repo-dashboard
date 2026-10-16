@@ -5,6 +5,7 @@ import { brokenRepo, cleanRepo } from '../fixtures/overview'
 
 // The PDS web components need a browser; stub them with plain elements that keep their text.
 const stubs = {
+  PDSCard: { template: '<div><slot name="header" /><slot /><slot name="footer" /></div>' },
   PDSBadge: { template: '<span data-badge><slot /></span>' },
   PDSIcon: { props: ['label'], template: '<svg role="img" :aria-label="label" />' },
 }

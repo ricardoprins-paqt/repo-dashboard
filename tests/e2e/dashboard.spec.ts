@@ -33,11 +33,11 @@ test('filters and searches the repository list', async ({ page }) => {
   await page.goto('/')
   await expect(page.getByRole('button', { name: 'Open details for gadgets' })).toBeVisible()
 
-  await page.getByRole('button', { name: 'Needs attention', exact: true }).click()
+  await page.getByRole('group', { name: 'Filter repositories' }).getByRole('button', { name: 'Needs attention', exact: true }).click()
   await expect(page.getByRole('button', { name: 'Open details for gadgets' })).toHaveCount(0)
   await expect(page.getByRole('button', { name: 'Open details for widgets' })).toBeVisible()
 
-  await page.getByRole('button', { name: 'All', exact: true }).click()
+  await page.getByRole('group', { name: 'Filter repositories' }).getByRole('button', { name: 'All', exact: true }).click()
   await page.getByRole('searchbox', { name: 'Search repo, branch or PR title' }).fill('gadg')
   await expect(page.getByRole('button', { name: 'Open details for widgets' })).toHaveCount(0)
   await expect(page.getByRole('button', { name: 'Open details for gadgets' })).toBeVisible()
@@ -60,6 +60,37 @@ test('opens the detail panel with changes, pull requests and CI', async ({ page 
 
   await page.getByRole('tab', { name: 'CI' }).click()
   await expect(panel).toContainText('Failing')
+})
+
+test('shows an alert callout when the overview cannot be loaded, and lets you dismiss it', async ({ page }) => {
+  await page.route('**/api/repos**', route => route.fulfill({ status: 500, json: { statusMessage: 'git is not installed' } }))
+  await page.goto('/')
+
+  const callout = page.locator('pds-exp-callout')
+  await expect(callout).toBeVisible()
+  await expect(callout).toContainText('Could not load the overview')
+  await expect(callout).toContainText('git is not installed')
+  await expect(page.getByRole('alert')).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Try again' })).toBeVisible()
+  // Nothing to summarize yet, so no endless skeletons or zero counts.
+  await expect(page.getByRole('heading', { name: /^Repositories/ })).toHaveCount(0)
+
+  await page.getByRole('button', { name: /close|dismiss/i }).click()
+  await expect(callout).toHaveCount(0)
+})
+
+test('opens the detail panel from anywhere on a card', async ({ page }) => {
+  await page.goto('/')
+  const card = page.locator('pds-card').filter({ hasText: 'widgets' })
+  await expect(card).toBeVisible()
+
+  // The repo name button is stretched over the whole card, so other content is covered by it
+  // and Playwright would refuse to click it. Click at the footer's position, like a user would.
+  await card.scrollIntoViewIfNeeded()
+  const footer = await card.getByText('Initial commit').boundingBox()
+  expect(footer).not.toBeNull()
+  await page.mouse.click(footer!.x + footer!.width / 2, footer!.y + footer!.height / 2)
+  await expect(page.locator('pds-slideover')).toContainText('/work/widgets')
 })
 
 test('serves the page shell from the server before hydration', async ({ request }) => {

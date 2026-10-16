@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { PDSExpCallout } from '@paqtdesign/experimental/vue'
 import type { RepoStatus } from '#shared/types/repo'
 
 const { overview, loading, githubLoading, fetching, error, autoRefresh, load, fetchRemotes } = useRepoOverview()
@@ -36,8 +37,13 @@ const showAllActions = ref(false)
 const visibleActions = computed(() => (showAllActions.value ? actionItems.value : actionItems.value.slice(0, ACTION_PREVIEW)))
 
 const busy = computed(() => loading.value || fetching.value)
-const initialLoad = computed(() => overview.value === null)
-const updatedLabel = computed(() => (overview.value ? `Updated ${relativeTime(overview.value.generatedAt)}` : 'Loading…'))
+const initialLoad = computed(() => overview.value === null && !error.value)
+// Without data and with an error there is nothing to show but the error itself.
+const hasContent = computed(() => overview.value !== null || !error.value)
+const updatedLabel = computed(() => {
+  if (overview.value) return `Updated ${relativeTime(overview.value.generatedAt)}`
+  return error.value ? 'Not loaded' : 'Loading…'
+})
 
 function setFilter(next: RepoFilter) {
   filter.value = filter.value === next ? 'all' : next
@@ -130,15 +136,35 @@ function setFilter(next: RepoFilter) {
       id="main-content"
       class="mx-auto flex w-full max-w-[84rem] flex-col gap-8 px-4 py-8 sm:px-8"
     >
-      <p
+      <!-- Persistent state (the data may be stale), so a callout rather than a toast. -->
+      <PDSExpCallout
         v-if="error"
-        role="alert"
-        class="rounded-surface border border-danger/40 bg-danger/10 p-3 text-sm text-danger"
+        color="danger"
+        appearance="subtle"
+        icon="lucide:circle-x"
+        callout-role="alert"
+        heading="Could not load the overview"
+        :description="error"
+        close
+        @pds-exp-callout-close="error = null"
       >
-        Could not load the overview: {{ error }}
-      </p>
+        <template #actions>
+          <PDSButton
 
-      <section aria-labelledby="summary-heading">
+            size="sm"
+            appearance="outlined"
+            :disabled="busy"
+            @click="load({ refresh: true })"
+          >
+            Try again
+          </PDSButton>
+        </template>
+      </PDSExpCallout>
+
+      <section
+        v-if="hasContent"
+        aria-labelledby="summary-heading"
+      >
         <h2
           id="summary-heading"
           class="sr-only"
@@ -260,6 +286,7 @@ function setFilter(next: RepoFilter) {
       </section>
 
       <section
+        v-if="hasContent"
         aria-labelledby="repos-heading"
         class="flex flex-col gap-4"
       >

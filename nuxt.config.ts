@@ -20,13 +20,23 @@ export default defineNuxtConfig({
     '~/assets/css/theme.css',
     '~/assets/css/tailwind.css',
   ],
+  // @paqtdesign/nuxt only wires up @paqtdesign/vue. The experimental package imports
+  // `@paqtdesign/core/tokens.css?inline`, which Node cannot resolve, so it has to be
+  // bundled by Vite instead of loaded as an external, exactly like the module does for vue.
+  build: {
+    transpile: ['@paqtdesign/experimental'],
+  },
   // Loopback only: the dashboard runs git and gh against local repos, so it must not be exposed on the network.
   devServer: { host: '127.0.0.1', port: 3178 },
   compatibilityDate: '2026-10-12',
+  nitro: {
+    externals: { inline: ['@paqtdesign/experimental'] },
+  },
   vite: {
     plugins: [tailwindcss()],
+    ssr: { noExternal: ['@paqtdesign/experimental'] },
     optimizeDeps: {
-      exclude: ['@paqtdesign/vue'],
+      exclude: ['@paqtdesign/vue', '@paqtdesign/experimental'],
     },
   },
   typescript: {

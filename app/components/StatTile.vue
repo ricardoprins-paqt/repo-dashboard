@@ -16,36 +16,44 @@ withDefaults(defineProps<{
 defineEmits<{ select: [] }>()
 
 const toneClass = {
-  danger: 'text-danger',
-  warning: 'text-[oklch(0.5_0.14_80)]',
-  success: 'text-success',
+  danger: 'text-danger-text',
+  warning: 'text-warning-text',
+  success: 'text-success-text',
   neutral: 'text-foreground',
 }
 </script>
 
 <template>
-  <button
-    type="button"
-    class="flex flex-col items-start gap-1 rounded-surface border bg-surface p-4 text-left transition-colors hover:border-border-strong"
-    :class="active ? 'border-foreground' : 'border-border'"
-    :aria-pressed="active"
-    @click="$emit('select')"
+  <!-- The label is a native button stretched over the whole tile, so the tile is one click target and one tab stop. -->
+  <PDSCard
+    class="relative h-full transition-shadow hover:shadow-float focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-foreground"
+    :class="active ? 'ring-2 ring-foreground' : ''"
+    appearance="outlined"
   >
-    <span class="text-xs font-semibold uppercase tracking-wide text-foreground-muted">{{ label }}</span>
-    <span
-      class="text-3xl font-semibold leading-none tabular-nums"
-      :class="toneClass[tone]"
-    >
+    <div class="flex flex-col items-start gap-1">
+      <button
+        type="button"
+        class="text-left text-xs font-semibold uppercase tracking-wide text-foreground-muted outline-none after:absolute after:inset-0 after:content-['']"
+        :aria-pressed="active"
+        @click="$emit('select')"
+      >
+        {{ label }}
+      </button>
       <span
-        v-if="loading"
-        class="inline-block h-7 w-8 animate-pulse rounded bg-neutral-muted"
-        aria-label="Loading"
-      />
-      <template v-else>{{ value }}</template>
-    </span>
-    <span
-      v-if="hint"
-      class="text-xs text-foreground-muted"
-    >{{ hint }}</span>
-  </button>
+        class="text-3xl font-semibold leading-none tabular-nums"
+        :class="toneClass[tone]"
+      >
+        <span
+          v-if="loading"
+          class="inline-block h-7 w-8 animate-pulse rounded bg-neutral-muted"
+          aria-label="Loading"
+        />
+        <template v-else>{{ value }}</template>
+      </span>
+      <span
+        v-if="hint"
+        class="text-xs text-foreground-muted"
+      >{{ hint }}</span>
+    </div>
+  </PDSCard>
 </template>

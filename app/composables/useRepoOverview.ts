@@ -2,6 +2,12 @@ import type { RepoOverview } from '#shared/types/repo'
 
 const AUTO_REFRESH_MS = 60_000
 
+/** Prefers the server's own message over ofetch's `[GET] "/url": 500 Internal Server Error`. */
+function describeError(caught: unknown): string {
+  const data = (caught as { data?: { statusMessage?: string, message?: string } } | null)?.data
+  return data?.statusMessage ?? data?.message ?? (caught instanceof Error ? caught.message : String(caught))
+}
+
 export function useRepoOverview() {
   const overview = useState<RepoOverview | null>('repo-overview', () => null)
   const loading = ref(false)
@@ -24,7 +30,7 @@ export function useRepoOverview() {
       overview.value = await $fetch<RepoOverview>(`/api/repos?github=1${refresh}`)
     }
     catch (caught) {
-      error.value = caught instanceof Error ? caught.message : String(caught)
+      error.value = describeError(caught)
     }
     finally {
       loading.value = false
@@ -40,7 +46,7 @@ export function useRepoOverview() {
       overview.value = await $fetch<RepoOverview>('/api/repos', { method: 'POST' })
     }
     catch (caught) {
-      error.value = caught instanceof Error ? caught.message : String(caught)
+      error.value = describeError(caught)
     }
     finally {
       fetching.value = false

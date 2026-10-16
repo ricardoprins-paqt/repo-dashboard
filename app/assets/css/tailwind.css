@@ -19,10 +19,21 @@
   --color-neutral-muted: var(--pds-color-neutral-muted);
   --color-brand: var(--pds-color-brand);
 
+  /* Status intents come from theme.css, not tokens.css. */
   --color-danger: var(--pds-color-danger);
   --color-warning: var(--pds-color-warning);
   --color-success: var(--pds-color-success);
   --color-info: var(--pds-color-info);
+
+  /*
+   * Readable text/icon versions of each intent on a light surface. This is the same
+   * relative-color formula the PDS theme uses for `--pds-current-intent-text`, which
+   * only exists inside the components' shadow DOM, so it is repeated here.
+   */
+  --color-danger-text: oklch(from var(--pds-color-danger) var(--pds-text-lightness) c h);
+  --color-warning-text: oklch(from var(--pds-color-warning) var(--pds-text-lightness) c h);
+  --color-success-text: oklch(from var(--pds-color-success) var(--pds-text-lightness) c h);
+  --color-info-text: oklch(from var(--pds-color-info) var(--pds-text-lightness) c h);
 
   --radius-surface: var(--pds-radius-surface);
   --radius-control: var(--pds-radius-md);

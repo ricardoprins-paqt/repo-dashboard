@@ -78,9 +78,13 @@ The page paints local git state first (well under a second) and fills in GitHub 
 
 ## Styling
 
-Tailwind utilities are backed by the design system tokens (see `app/assets/css/tailwind.css`): `bg-surface`, `text-foreground-muted`, `border-border`, `text-danger` and so on follow the PAQT theme in `app/assets/css/theme.css`. Interactive controls (buttons, badges, tabs, slideover, input, select, toggle) are PDS components.
+Tailwind utilities are backed by the design system tokens (see `app/assets/css/tailwind.css`): `bg-surface`, `text-foreground-muted`, `border-border` and so on follow the PAQT theme in `app/assets/css/theme.css`. The status colors (`success`, `warning`, `danger`, `info`) only exist in `theme.css`, not in `tokens.css`, and so do their readable `-text` versions (`text-danger-text` etc.), which the theme only defines inside the components' shadow DOM, so `tailwind.css` repeats the same formula.
 
-Icons: `app/plugins/icons.client.ts` registers a bundled Lucide subset so PDS components do not call the Iconify API, and every icon in the app is a `PDSIcon`. Add a name to `app/utils/icons.ts` when you need a new icon.
+Components: cards (`PDSCard`), buttons, badges, tabs, slideover, input, select and toggle come from `@paqtdesign/vue`. The error callout (`PDSExpCallout`) comes from `@paqtdesign/experimental`, which `@paqtdesign/nuxt` does not know about, so `nuxt.config.ts` bundles it for SSR the same way the module does for `@paqtdesign/vue`. Import experimental components explicitly from `@paqtdesign/experimental/vue`.
+
+`PDSCard` has no click support, so each card (and summary tile) contains a native `<button>` stretched over the whole card with an `after:absolute after:inset-0` pseudo-element. The card is then one click target and one tab stop, and the repo name stays a real heading.
+
+Icons: `app/plugins/icons.client.ts` registers a bundled Lucide subset (listed in `app/utils/icons.ts`) so `PDSIcon` does not call the Iconify API. It uses `iconify-icon` directly, because importing PDS's `registerIconCollection` defines `<pds-icon>` first, which already starts the remote lookups.
 
 ## Checks
 
@@ -97,4 +101,6 @@ Install the browser once with `pnpm exec playwright install chromium`. The e2e t
 ## Known limitations
 
 - GitHub data only covers repositories whose `origin` is on github.com. Others show git data and a "No GitHub data" badge.
-- `PDSInput` does not pass `aria-label` on to the inner `<input>` in the current `@paqtdesign/vue` (1.8.1), so its placeholder is what assistive technology reads. `PDSSelect` and `PDSToggle` take the same prop and were not checked.
+- `@paqtdesign/vue` 1.8.1 declares `aria-label`, `aria-labelledby` and `aria-describedby` as props on `PDSInput`, `PDSSelect`, `PDSCheckbox` and `PDSToggle` but never passes them to the element, and a declared prop is removed from the pass-through attributes, so there is no template workaround. Screen readers get the placeholder (input) or visible text instead.
+- Some Vue wrappers render boolean props differently on the server than on the client (`PDSButton` `loading=""` vs `"false"`, `PDSToggle` a stray `size`), which Vue reports as a hydration mismatch. The buttons pass `undefined` instead of `false`, and the toggle is wrapped in `<ClientOnly>`. The mechanism was not investigated.
+- Some `<pds-icon>` elements rendered blank after the page re-sorted the cards, earlier in development. The cause was not found.

@@ -33,11 +33,12 @@ test('filters and searches the repository list', async ({ page }) => {
   await page.goto('/')
   await expect(page.getByRole('button', { name: 'Open details for gadgets' })).toBeVisible()
 
-  await page.getByRole('group', { name: 'Filter repositories' }).getByRole('button', { name: 'Needs attention', exact: true }).click()
+  await page.getByRole('group', { name: 'Filter repositories' }).getByRole('button', { name: /^Needs attention/ }).click()
+  await expect(page.getByRole('group', { name: 'Filter repositories' }).getByRole('button', { name: 'Needs attention (selected)' })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Open details for gadgets' })).toHaveCount(0)
   await expect(page.getByRole('button', { name: 'Open details for widgets' })).toBeVisible()
 
-  await page.getByRole('group', { name: 'Filter repositories' }).getByRole('button', { name: 'All', exact: true }).click()
+  await page.getByRole('group', { name: 'Filter repositories' }).getByRole('button', { name: /^All/ }).click()
   await page.getByRole('searchbox', { name: 'Search repo, branch or PR title' }).fill('gadg')
   await expect(page.getByRole('button', { name: 'Open details for widgets' })).toHaveCount(0)
   await expect(page.getByRole('button', { name: 'Open details for gadgets' })).toBeVisible()
@@ -91,6 +92,41 @@ test('opens the detail panel from anywhere on a card', async ({ page }) => {
   expect(footer).not.toBeNull()
   await page.mouse.click(footer!.x + footer!.width / 2, footer!.y + footer!.height / 2)
   await expect(page.locator('pds-slideover')).toContainText('/work/widgets')
+})
+
+test('switches between light and dark mode and remembers the choice', async ({ page }) => {
+  const errors: string[] = []
+  page.on('console', (message) => {
+    if (message.type() === 'error') errors.push(message.text())
+  })
+  const html = page.locator('html')
+
+  await page.goto('/')
+  await expect(html).toHaveAttribute('data-theme', 'light')
+
+  await page.getByRole('button', { name: 'Switch to dark mode' }).click()
+  await expect(html).toHaveAttribute('data-theme', 'dark')
+  await expect(page.getByRole('button', { name: 'Switch to light mode' })).toBeVisible()
+
+  // The head script applies the stored choice before the first paint, and hydration still agrees.
+  await page.reload()
+  await expect(html).toHaveAttribute('data-theme', 'dark')
+  await expect(page.getByRole('button', { name: 'Switch to light mode' })).toBeVisible()
+
+  await page.getByRole('button', { name: 'Switch to light mode' }).click()
+  await expect(html).toHaveAttribute('data-theme', 'light')
+  await page.reload()
+  await expect(html).toHaveAttribute('data-theme', 'light')
+  expect(errors).toEqual([])
+})
+
+test.describe('with an OS that prefers dark', () => {
+  test.use({ colorScheme: 'dark' })
+
+  test('starts in dark mode when nothing is stored', async ({ page }) => {
+    await page.goto('/')
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
+  })
 })
 
 test('serves the page shell from the server before hydration', async ({ request }) => {

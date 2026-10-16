@@ -10,7 +10,9 @@ export const APP_ICONS = [
   'cloud-download',
   'git-branch',
   'info',
+  'moon',
   'refresh-cw',
+  'sun',
   'triangle-alert',
 ] as const
 

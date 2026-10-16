@@ -15,3 +15,18 @@
 :root {
   --pds-font-family: 'IBM Plex Sans', sans-serif;
 }
+
+:root {
+  color-scheme: light;
+}
+
+/*
+ * Dark counterparts the generated brand theme does not include.
+ * --pds-text-lightness sets how light the readable text/icon version of each status color is
+ * (see --pds-current-intent-text in core's theme.css). 0.42 suits a light surface and is far
+ * too dark on a dark one.
+ */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --pds-text-lightness: 0.78;
+}

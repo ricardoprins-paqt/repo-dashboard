@@ -2,6 +2,7 @@
 import { PDSExpCallout } from '@paqtdesign/experimental/vue'
 import type { RepoStatus } from '#shared/types/repo'
 
+const { theme, toggle: toggleTheme } = useTheme()
 const { overview, loading, githubLoading, fetching, error, autoRefresh, load, fetchRemotes } = useRepoOverview()
 
 const filter = ref<RepoFilter>('all')
@@ -65,6 +66,7 @@ function setFilter(next: RepoFilter) {
           aria-label="PAQT repo dashboard home"
         >
           <img
+            class="dark:invert"
             src="/logo.svg"
             width="110"
             height="24"
@@ -100,6 +102,18 @@ function setFilter(next: RepoFilter) {
               Auto-refresh
             </PDSToggle>
           </ClientOnly>
+          <!-- PDSButton does not pass aria-* attributes on to its inner <button>, so the name is slot text. -->
+          <PDSButton
+            appearance="outlined"
+            square
+            @click="toggleTheme"
+          >
+            <PDSIcon
+              :name="theme === 'dark' ? 'lucide:sun' : 'lucide:moon'"
+              size="16"
+            />
+            <span class="sr-only">{{ theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode' }}</span>
+          </PDSButton>
           <PDSButton
             appearance="outlined"
             :loading="loading || undefined"
@@ -327,10 +341,12 @@ function setFilter(next: RepoFilter) {
             size="sm"
             :appearance="filter === option.id ? undefined : 'outlined'"
             :color="filter === option.id ? 'brand' : undefined"
-            :aria-pressed="filter === option.id"
             @click="filter = option.id"
           >
-            {{ option.label }}
+            {{ option.label }}<span
+              v-if="filter === option.id"
+              class="sr-only"
+            > (selected)</span>
           </PDSButton>
         </div>
 

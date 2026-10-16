@@ -26,8 +26,8 @@ const toneClass = {
 <template>
   <!-- The label is a native button stretched over the whole tile, so the tile is one click target and one tab stop. -->
   <PDSCard
-    class="relative h-full transition-shadow hover:shadow-float focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-foreground"
-    :class="active ? 'ring-2 ring-foreground' : ''"
+    class="card-interactive relative h-full"
+    :class="{ 'card-selected': active }"
     appearance="outlined"
   >
     <div class="flex flex-col items-start gap-1">

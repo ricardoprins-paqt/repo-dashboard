@@ -52,3 +52,27 @@
     outline-offset: var(--pds-focus-ring-offset);
   }
 }
+
+/*
+ * States for interactive PDSCards. They set the card's own custom properties, so the
+ * card's border (and its rounded corners) shows the state, instead of a separate outline.
+ * The 1px shadow thickens the border without shifting the layout.
+ */
+@utility card-interactive {
+  --pds-card-border-color-hover: var(--pds-color-border-hover);
+
+  /* Keyboard focus only: a mouse click on the card must not leave a ring behind. */
+  &:has(:focus-visible) {
+    --pds-card-border-color: var(--pds-color-foreground);
+    --pds-card-border-color-hover: var(--pds-color-foreground);
+    --pds-card-shadow: 0 0 0 1px var(--pds-color-foreground);
+    --pds-card-shadow-hover: 0 0 0 1px var(--pds-color-foreground);
+  }
+}
+
+@utility card-selected {
+  --pds-card-border-color: var(--pds-color-foreground);
+  --pds-card-border-color-hover: var(--pds-color-foreground);
+  --pds-card-shadow: 0 0 0 1px var(--pds-color-foreground);
+  --pds-card-shadow-hover: 0 0 0 1px var(--pds-color-foreground);
+}

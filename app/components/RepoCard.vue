@@ -23,7 +23,7 @@ const rawChanges = computed(() => (tree.value ? tree.value.staged + tree.value.u
 <template>
   <!-- The repo name is a native button stretched over the whole card (see `after:` classes), so the card is one click target and one tab stop. -->
   <PDSCard
-    class="relative h-full transition-shadow hover:shadow-float focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-foreground"
+    class="card-interactive relative h-full"
     appearance="outlined"
     :color="repo.severity === 'critical' ? 'danger' : undefined"
   >

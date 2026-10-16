@@ -1,0 +1,9 @@
+minimumReleaseAge: 1440
+engineStrict: true
+saveExact: true
+strictDepBuilds: true
+verifyStoreIntegrity: true
+verifyDepsBeforeRun: error
+allowBuilds:
+  esbuild: true
+  unrs-resolver: true

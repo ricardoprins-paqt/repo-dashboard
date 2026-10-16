@@ -1,0 +1,43 @@
+@import "tailwindcss";
+
+/*
+ * Tailwind utilities backed by the PAQT design tokens, so `bg-surface`,
+ * `text-foreground-muted` and friends follow the design system theme.
+ * `inline` makes utilities reference the var() directly instead of copying
+ * its value, so theme overrides keep working.
+ */
+@theme inline {
+  --font-sans: var(--pds-font-family);
+  --font-mono: var(--pds-font-family-mono);
+
+  --color-background: var(--pds-color-background);
+  --color-surface: var(--pds-color-surface);
+  --color-foreground: var(--pds-color-foreground);
+  --color-foreground-muted: var(--pds-color-foreground-muted);
+  --color-border: var(--pds-color-border);
+  --color-border-strong: var(--pds-color-border-hover);
+  --color-neutral-muted: var(--pds-color-neutral-muted);
+  --color-brand: var(--pds-color-brand);
+
+  --color-danger: var(--pds-color-danger);
+  --color-warning: var(--pds-color-warning);
+  --color-success: var(--pds-color-success);
+  --color-info: var(--pds-color-info);
+
+  --radius-surface: var(--pds-radius-surface);
+  --radius-control: var(--pds-radius-md);
+  --shadow-float: var(--pds-shadow-md);
+}
+
+@layer base {
+  body {
+    background: var(--pds-color-background);
+    color: var(--pds-color-foreground);
+    font-family: var(--pds-font-family);
+  }
+
+  :focus-visible {
+    outline: var(--pds-focus-ring);
+    outline-offset: var(--pds-focus-ring-offset);
+  }
+}

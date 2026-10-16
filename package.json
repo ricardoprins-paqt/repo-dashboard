@@ -1,0 +1,49 @@
+{
+  "name": "repo-dashboard",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.34.7",
+  "engines": {
+    "node": ">=24 <25",
+    "pnpm": ">=10.34.7 <11"
+  },
+  "scripts": {
+    "dev": "nuxt dev",
+    "build": "nuxt build",
+    "preview": "nuxt preview",
+    "start": "NITRO_HOST=127.0.0.1 NITRO_PORT=3178 node .output/server/index.mjs",
+    "repos": "node scripts/repos-status.ts",
+    "postinstall": "nuxt prepare",
+    "lint": "eslint . --max-warnings=0",
+    "lint:fix": "eslint . --fix",
+    "typecheck": "nuxt typecheck",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "check": "pnpm lint && pnpm typecheck && pnpm test && pnpm build && pnpm test:e2e"
+  },
+  "dependencies": {
+    "@fontsource/ibm-plex-sans": "^5.3.0",
+    "@paqtdesign/core": "1.8.1",
+    "@paqtdesign/nuxt": "1.0.0",
+    "@paqtdesign/vue": "1.8.1",
+    "nuxt": "^4.6.1",
+    "vue": "^3.5.0"
+  },
+  "devDependencies": {
+    "@iconify-json/lucide": "1.2.144",
+    "@nuxt/eslint": "^1.17.0",
+    "@nuxt/test-utils": "4.3.3",
+    "@playwright/test": "^1.64.0",
+    "@stylistic/eslint-plugin": "^5.0.0",
+    "@tailwindcss/vite": "4.3.3",
+    "@vue/test-utils": "2.5.1",
+    "eslint": "^10.12.0",
+    "happy-dom": "20.14.6",
+    "iconify-icon": "3.0.3",
+    "tailwindcss": "4.3.3",
+    "typescript": "~5.9.3",
+    "vitest": "^5.0.4",
+    "vue-tsc": "^3.0.0"
+  }
+}

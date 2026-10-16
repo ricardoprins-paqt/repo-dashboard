@@ -2,7 +2,8 @@ import tailwindcss from '@tailwindcss/vite'
 
 export default defineNuxtConfig({
   modules: [
-    ['@paqtdesign/nuxt', { customTheme: '~/assets/css/theme.css' }],
+    // tokens.css is imported below, before the theme, so the load order is explicit.
+    ['@paqtdesign/nuxt', { autoImportCss: false, customTheme: '~/assets/css/theme.css' }],
     '@nuxt/eslint',
   ],
   devtools: { enabled: true },
@@ -17,6 +18,7 @@ export default defineNuxtConfig({
   css: [
     '@fontsource/ibm-plex-sans/400.css',
     '@fontsource/ibm-plex-sans/600.css',
+    '@paqtdesign/core/dist/tokens.css',
     '~/assets/css/theme.css',
     '~/assets/css/tailwind.css',
   ],

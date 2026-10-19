@@ -25,6 +25,8 @@ const reviewLabel: Record<string, string> = {
   REVIEW_REQUIRED: 'Review required',
 }
 
+const worktrees = computed(() => git.value?.worktrees ?? [])
+const worktreeLabels = computed(() => new Map(worktrees.value.map(worktree => [worktree.path, worktree.label])))
 const sortedBranches = computed(() => [...(git.value?.branches ?? [])].sort((a, b) => b.lastCommitDate.localeCompare(a.lastCommitDate)))
 const runs = computed(() => [
   ...(github.value?.defaultBranchRuns ?? []).map(run => ({ ...run, scope: 'default branch' })),
@@ -44,6 +46,12 @@ const runs = computed(() => [
       </PDSTab>
       <PDSTab panel="changes">
         Changes
+      </PDSTab>
+      <PDSTab
+        v-if="worktrees.length > 0"
+        panel="worktrees"
+      >
+        Worktrees ({{ worktrees.length }})
       </PDSTab>
       <PDSTab panel="branches">
         Branches
@@ -70,14 +78,17 @@ const runs = computed(() => [
             >
               <li
                 v-for="item in repo.attention"
-                :key="item.code"
+                :key="`${item.worktree ?? ''}:${item.code}`"
                 class="flex items-start gap-2 text-sm"
               >
                 <SeverityIcon
                   :severity="item.severity"
                   class="mt-0.5 shrink-0"
                 />
-                <span>{{ item.message }}</span>
+                <span><span
+                  v-if="item.worktree"
+                  class="font-semibold"
+                >{{ item.worktree }}: </span>{{ item.message }}</span>
               </li>
             </ul>
             <p
@@ -234,6 +245,115 @@ const runs = computed(() => [
         </div>
       </PDSTabPanel>
 
+      <PDSTabPanel
+        v-if="worktrees.length > 0"
+        name="worktrees"
+      >
+        <ul class="flex flex-col py-4">
+          <li
+            v-for="worktree in worktrees"
+            :key="worktree.path"
+            class="flex flex-col gap-2 border-b border-border py-4 first:pt-0 last:border-b-0"
+          >
+            <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+              <h3 class="text-sm font-semibold">
+                {{ worktree.label }}
+              </h3>
+              <span class="inline-flex min-w-0 items-center gap-1 text-sm">
+                <PDSIcon
+                  name="lucide:git-branch"
+                  size="14"
+                />
+                <span class="break-all font-mono text-xs">{{ worktree.branch ?? 'detached HEAD' }}</span>
+              </span>
+              <span
+                v-if="worktree.upstream"
+                class="text-sm tabular-nums text-foreground-muted"
+                title="Commits to push and to pull"
+              >↑{{ worktree.ahead }} ↓{{ worktree.behind }}</span>
+              <span
+                v-else-if="!worktree.missing && !worktree.detached"
+                class="text-xs text-foreground-muted"
+              >no upstream</span>
+              <span
+                v-if="worktree.vsDefault && git?.defaultBranch"
+                class="text-xs text-foreground-muted"
+              >{{ worktree.vsDefault.ahead }} ahead, {{ worktree.vsDefault.behind }} behind {{ git.defaultBranch }}</span>
+            </div>
+            <p class="break-all font-mono text-xs text-foreground-muted">
+              {{ worktree.path }}
+            </p>
+            <ul
+              v-if="worktree.attention.length > 0"
+              class="flex flex-col gap-1"
+            >
+              <li
+                v-for="item in worktree.attention"
+                :key="item.code"
+                class="flex items-start gap-2 text-sm"
+              >
+                <SeverityIcon
+                  :severity="item.severity"
+                  class="mt-0.5 shrink-0"
+                />
+                <span>{{ item.message }}</span>
+              </li>
+            </ul>
+            <p
+              v-else
+              class="text-sm text-foreground-muted"
+            >
+              All clear.
+            </p>
+            <ul
+              v-if="worktree.workingTree.files.length > 0"
+              class="flex flex-col gap-1"
+              :aria-label="`Changed files in ${worktree.label}`"
+            >
+              <li
+                v-for="file in worktree.workingTree.files"
+                :key="`${file.kind}:${file.path}`"
+                class="flex items-center gap-2 text-sm"
+              >
+                <PDSBadge
+                  :color="fileKindColor[file.kind]"
+                  appearance="subtle"
+                  size="sm"
+                  class="shrink-0"
+                >
+                  {{ fileKindLabel[file.kind] }}
+                </PDSBadge>
+                <span class="min-w-0 break-all font-mono text-xs">{{ file.path }}</span>
+              </li>
+              <li
+                v-if="worktree.workingTree.filesTruncated"
+                class="text-xs text-foreground-muted"
+              >
+                More files not shown.
+              </li>
+            </ul>
+            <ul
+              v-if="worktree.unpushed.length > 0"
+              class="flex flex-col gap-1 text-sm"
+              :aria-label="`Commits not pushed from ${worktree.label}`"
+            >
+              <li
+                v-for="commit in worktree.unpushed"
+                :key="commit.hash"
+              >
+                <span class="font-mono text-xs text-foreground-muted">{{ commit.hash }}</span> {{ commit.subject }}
+              </li>
+            </ul>
+            <p
+              v-if="worktree.lastCommit"
+              class="truncate text-xs text-foreground-muted"
+            >
+              {{ worktree.lastCommit.subject }} · {{ worktree.lastCommit.author }}, {{ relativeTime(worktree.lastCommit.date) }}
+            </p>
+          </li>
+        </ul>
+      </PDSTabPanel>
+
       <PDSTabPanel name="branches">
         <div
           v-if="git"
@@ -277,6 +397,14 @@ const runs = computed(() => [
                     class="ml-1"
                   >
                     current
+                  </PDSBadge>
+                  <PDSBadge
+                    v-if="branch.worktreePath && worktreeLabels.has(branch.worktreePath)"
+                    appearance="subtle"
+                    size="sm"
+                    class="ml-1"
+                  >
+                    {{ worktreeLabels.get(branch.worktreePath) }}
                   </PDSBadge>
                   <PDSBadge
                     v-if="branch.merged"

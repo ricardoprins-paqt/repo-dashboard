@@ -1,14 +1,18 @@
 import { execFile } from 'node:child_process'
 import { stat } from 'node:fs/promises'
-import { join } from 'node:path'
+import { homedir } from 'node:os'
+import { join, resolve } from 'node:path'
 import { promisify } from 'node:util'
-import type { BranchInfo, ChangedFile, CommitSummary, GitInfo, WorkingTreeInfo } from '../../shared/types/repo.ts'
+import type { BranchInfo, ChangedFile, CommitSummary, GitInfo, WorkingTreeInfo, WorktreeInfo } from '../../shared/types/repo.ts'
+import { pool } from './pool.ts'
 
 const execFileAsync = promisify(execFile)
 
 const MAX_LISTED_FILES = 60
 const MAX_LISTED_COMMITS = 8
 const FIELD_SEPARATOR = '\u001F'
+/** Worktrees of one repository collected at the same time. */
+const WORKTREE_CONCURRENCY = 4
 
 const gitEnv = {
   ...process.env,
@@ -143,7 +147,7 @@ export function parseBranches(output: string, mergedNames: Set<string>): BranchI
   const branches: BranchInfo[] = []
   for (const line of output.split('\n')) {
     if (!line) continue
-    const [name = '', upstream = '', track = '', date = '', head = ''] = line.split(FIELD_SEPARATOR)
+    const [name = '', upstream = '', track = '', date = '', head = '', worktreePath = ''] = line.split(FIELD_SEPARATOR)
     const { ahead, behind, gone } = parseTrack(track)
     branches.push({
       name,
@@ -154,6 +158,7 @@ export function parseBranches(output: string, mergedNames: Set<string>): BranchI
       behind,
       merged: mergedNames.has(name),
       lastCommitDate: date,
+      worktreePath: worktreePath || null,
     })
   }
   return branches
@@ -167,6 +172,42 @@ export function parseCommits(output: string): CommitSummary[] {
     commits.push({ hash, author, date, subject: subject.join(FIELD_SEPARATOR) })
   }
   return commits
+}
+
+export interface WorktreeEntry {
+  path: string
+  head: string | null
+  branch: string | null
+  detached: boolean
+  bare: boolean
+  prunable: boolean
+}
+
+/** Parses `git worktree list --porcelain`; the first entry is the main checkout. */
+export function parseWorktreeList(output: string): WorktreeEntry[] {
+  const entries: WorktreeEntry[] = []
+  for (const block of output.split(/\n\n+/)) {
+    const entry: WorktreeEntry = { path: '', head: null, branch: null, detached: false, bare: false, prunable: false }
+    for (const line of block.split('\n')) {
+      const [key = '', ...rest] = line.split(' ')
+      const value = rest.join(' ')
+      if (key === 'worktree') entry.path = value
+      else if (key === 'HEAD') entry.head = value
+      else if (key === 'branch') entry.branch = value.replace(/^refs\/heads\//, '')
+      else if (key === 'detached') entry.detached = true
+      else if (key === 'bare') entry.bare = true
+      else if (key === 'prunable') entry.prunable = true
+    }
+    if (entry.path) entries.push(entry)
+  }
+  return entries
+}
+
+/** "Session 4" for a Claude session folder (~/workspace/lss-*-claude-workspace-4/<repo>), otherwise the path with ~ for home. */
+export function worktreeLabel(path: string, home: string = homedir()): string {
+  const session = /\/lss-[^/]*-claude-workspace-(\d+)\/[^/]+\/?$/.exec(path)
+  if (session) return `Session ${session[1]}`
+  return path === home || path.startsWith(`${home}/`) ? `~${path.slice(home.length)}` : path
 }
 
 const COMMIT_FORMAT = ['%h', '%an', '%aI', '%s'].join('%x1f')
@@ -206,12 +247,13 @@ export async function collectGit(cwd: string): Promise<GitInfo> {
   const statusOutput = await git(cwd, ['status', '--porcelain=v2', '--branch'])
   const status = parseStatusV2(statusOutput)
 
-  const [branchOutput, stashOutput, lastCommitOutput, remoteUrl, fetchedAt] = await Promise.all([
-    gitOrNull(cwd, ['for-each-ref', `--format=%(refname:short)%1f%(upstream:short)%1f%(upstream:track)%1f%(committerdate:iso-strict)%1f%(HEAD)`, 'refs/heads']),
+  const [branchOutput, stashOutput, lastCommitOutput, remoteUrl, fetchedAt, worktreeOutput] = await Promise.all([
+    gitOrNull(cwd, ['for-each-ref', `--format=%(refname:short)%1f%(upstream:short)%1f%(upstream:track)%1f%(committerdate:iso-strict)%1f%(HEAD)%1f%(worktreepath)`, 'refs/heads']),
     gitOrNull(cwd, ['stash', 'list']),
     gitOrNull(cwd, ['log', '-1', `--format=${COMMIT_FORMAT}`]),
     gitOrNull(cwd, ['remote', 'get-url', 'origin']),
     lastFetchedAt(cwd),
+    gitOrNull(cwd, ['worktree', 'list', '--porcelain']),
   ])
 
   const branchNames = (branchOutput ?? '').split('\n').filter(Boolean).map(line => line.split(FIELD_SEPARATOR)[0] ?? '')
@@ -235,7 +277,9 @@ export async function collectGit(cwd: string): Promise<GitInfo> {
       : null,
   ])
 
-  const vsDefaultMatch = vsDefaultOutput ? /^(\d+)\s+(\d+)/.exec(vsDefaultOutput.trim()) : null
+  const here = resolve(cwd)
+  const linked = parseWorktreeList(worktreeOutput ?? '').slice(1).filter(entry => !entry.bare && resolve(entry.path) !== here)
+  const worktrees = await pool(linked, WORKTREE_CONCURRENCY, entry => collectWorktree(entry, defaultBranch))
 
   return {
     branch: status.branch,
@@ -245,7 +289,7 @@ export async function collectGit(cwd: string): Promise<GitInfo> {
     ahead: status.ahead,
     behind: status.behind,
     defaultBranch,
-    vsDefault: vsDefaultMatch ? { behind: Number(vsDefaultMatch[1]), ahead: Number(vsDefaultMatch[2]) } : null,
+    vsDefault: parseVsDefault(vsDefaultOutput),
     workingTree: status.workingTree,
     stashCount: (stashOutput ?? '').split('\n').filter(Boolean).length,
     lastCommit: parseCommits(lastCommitOutput ?? '')[0] ?? null,
@@ -254,6 +298,74 @@ export async function collectGit(cwd: string): Promise<GitInfo> {
     branches: parseBranches(branchOutput ?? '', merged),
     remoteUrl: remoteUrl?.trim() || null,
     lastFetchedAt: fetchedAt,
+    worktrees,
+  }
+}
+
+/** `rev-list --left-right --count origin/<default>...HEAD` output: behind, then ahead. */
+function parseVsDefault(output: string | null): { ahead: number, behind: number } | null {
+  const match = output ? /^(\d+)\s+(\d+)/.exec(output.trim()) : null
+  return match ? { behind: Number(match[1]), ahead: Number(match[2]) } : null
+}
+
+/** The per-checkout part of collectGit for a linked worktree; refs, stashes and remotes are shared with the main checkout. */
+export async function collectWorktree(entry: WorktreeEntry, defaultBranch: string | null): Promise<WorktreeInfo> {
+  const info: WorktreeInfo = {
+    path: entry.path,
+    label: worktreeLabel(entry.path),
+    missing: entry.prunable,
+    branch: entry.branch,
+    detached: entry.detached,
+    headSha: entry.head,
+    upstream: null,
+    ahead: 0,
+    behind: 0,
+    vsDefault: null,
+    orphanCommits: 0,
+    workingTree: { staged: 0, unstaged: 0, untracked: 0, conflicted: 0, files: [], filesTruncated: false },
+    lastCommit: null,
+    unpushed: [],
+    gitError: null,
+    attention: [],
+  }
+  if (entry.prunable) return info
+
+  const cwd = entry.path
+  let status: ParsedStatus
+  try {
+    status = parseStatusV2(await git(cwd, ['status', '--porcelain=v2', '--branch']))
+  }
+  catch (error) {
+    info.gitError = error instanceof Error ? error.message.split('\n')[0] ?? error.message : String(error)
+    return info
+  }
+
+  const [lastCommitOutput, unpushedOutput, vsDefaultOutput, orphanOutput] = await Promise.all([
+    gitOrNull(cwd, ['log', '-1', `--format=${COMMIT_FORMAT}`]),
+    status.upstream
+      ? gitOrNull(cwd, ['log', '@{upstream}..HEAD', `--format=${COMMIT_FORMAT}`, `-n${MAX_LISTED_COMMITS}`])
+      : null,
+    defaultBranch && status.branch !== defaultBranch
+      ? gitOrNull(cwd, ['rev-list', '--left-right', '--count', `origin/${defaultBranch}...HEAD`])
+      : null,
+    status.detached
+      ? gitOrNull(cwd, ['rev-list', '--count', 'HEAD', '--not', '--branches', '--remotes'])
+      : null,
+  ])
+
+  return {
+    ...info,
+    branch: status.branch,
+    detached: status.detached,
+    headSha: status.headSha,
+    upstream: status.upstream,
+    ahead: status.ahead,
+    behind: status.behind,
+    vsDefault: parseVsDefault(vsDefaultOutput),
+    orphanCommits: Number(orphanOutput?.trim() || 0),
+    workingTree: status.workingTree,
+    lastCommit: parseCommits(lastCommitOutput ?? '')[0] ?? null,
+    unpushed: parseCommits(unpushedOutput ?? ''),
   }
 }
 

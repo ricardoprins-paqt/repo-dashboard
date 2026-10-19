@@ -4,6 +4,8 @@ export interface AttentionItem {
   severity: Severity
   code: string
   message: string
+  /** Label of the linked worktree this finding is about (e.g. "Session 4"), absent for the main checkout. */
+  worktree?: string
 }
 
 export interface ChangedFile {
@@ -31,6 +33,8 @@ export interface BranchInfo {
   behind: number
   merged: boolean
   lastCommitDate: string
+  /** Folder of the worktree that has this branch checked out, or null. */
+  worktreePath: string | null
 }
 
 export interface WorkingTreeInfo {
@@ -40,6 +44,30 @@ export interface WorkingTreeInfo {
   conflicted: number
   files: ChangedFile[]
   filesTruncated: boolean
+}
+
+/** A linked worktree (`git worktree add`) of the repository, e.g. a Claude session's checkout. */
+export interface WorktreeInfo {
+  path: string
+  /** "Session 4" for ~/workspace/lss-*-claude-workspace-4/<repo>, otherwise the folder with ~ for home. */
+  label: string
+  /** The folder no longer exists; `git worktree prune` removes the entry. */
+  missing: boolean
+  branch: string | null
+  detached: boolean
+  headSha: string | null
+  upstream: string | null
+  ahead: number
+  behind: number
+  /** Branch compared with the remote default branch. */
+  vsDefault: { ahead: number, behind: number } | null
+  /** Commits only reachable from a detached HEAD (no branch or remote contains them). */
+  orphanCommits: number
+  workingTree: WorkingTreeInfo
+  lastCommit: CommitSummary | null
+  unpushed: CommitSummary[]
+  gitError: string | null
+  attention: AttentionItem[]
 }
 
 export interface GitInfo {
@@ -60,6 +88,8 @@ export interface GitInfo {
   branches: BranchInfo[]
   remoteUrl: string | null
   lastFetchedAt: string | null
+  /** Linked worktrees, without the main checkout described above. */
+  worktrees: WorktreeInfo[]
 }
 
 export type CheckState = 'success' | 'failure' | 'pending' | 'none'

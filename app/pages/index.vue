@@ -281,7 +281,7 @@ function setFilter(next: RepoFilter) {
         <ul class="divide-y divide-border">
           <li
             v-for="{ repo, item } in visibleActions"
-            :key="`${repo.name}:${item.code}`"
+            :key="`${repo.name}:${item.worktree ?? ''}:${item.code}`"
           >
             <button
               type="button"
@@ -293,7 +293,10 @@ function setFilter(next: RepoFilter) {
                 class="mt-0.5 shrink-0"
               />
               <span class="w-52 shrink-0 truncate font-semibold">{{ repo.name }}</span>
-              <span class="min-w-0 flex-1">{{ item.message }}</span>
+              <span class="min-w-0 flex-1"><span
+                v-if="item.worktree"
+                class="font-semibold"
+              >{{ item.worktree }}: </span>{{ item.message }}</span>
             </button>
           </li>
         </ul>

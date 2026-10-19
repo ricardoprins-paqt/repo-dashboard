@@ -41,5 +41,9 @@ const describe = (repo: RepoStatus) => {
 
 for (const repo of overview.repos) {
   console.log(`${repo.severity ? icon[repo.severity] : '✔'} ${describe(repo)}`)
-  for (const item of repo.attention) console.log(`    ${icon[item.severity]} ${item.message}`)
+  for (const worktree of repo.git?.worktrees ?? []) {
+    const tree = worktree.workingTree
+    console.log(`    ⎇ ${worktree.label.padEnd(12)} ${(worktree.branch ?? 'detached').padEnd(32)} ${(worktree.upstream ? `↑${worktree.ahead} ↓${worktree.behind}` : worktree.detached ? '' : 'no upstream').padEnd(12)}  +${tree.staged} ~${tree.unstaged} ?${tree.untracked}`)
+  }
+  for (const item of repo.attention) console.log(`    ${icon[item.severity]} ${item.worktree ? `${item.worktree}: ` : ''}${item.message}`)
 }

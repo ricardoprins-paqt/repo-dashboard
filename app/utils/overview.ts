@@ -1,4 +1,4 @@
-import type { CheckState, RepoOverview, RepoStatus, Severity } from '#shared/types/repo'
+import type { CheckState, RepoOverview, RepoStatus, Severity, WorktreeInfo } from '#shared/types/repo'
 
 export type RepoFilter = 'all' | 'attention' | 'uncommitted' | 'unpushed' | 'behind' | 'ci-failing' | 'prs' | 'clean'
 export type RepoSort = 'attention' | 'name' | 'activity'
@@ -28,14 +28,18 @@ export function hasFailingCi(repo: RepoStatus): boolean {
   return runs.some(run => run.state === 'failure') || (repo.github?.pullRequests.some(pull => pull.checks === 'failure') ?? false)
 }
 
+/** The main checkout and the linked worktrees: each has its own working tree and branch. */
+function checkouts(repo: RepoStatus): Array<Pick<WorktreeInfo, 'workingTree' | 'ahead' | 'behind' | 'branch'>> {
+  return repo.git ? [repo.git, ...repo.git.worktrees] : []
+}
+
 export function matchesFilter(repo: RepoStatus, filter: RepoFilter): boolean {
-  const git = repo.git
   switch (filter) {
     case 'all': return true
     case 'attention': return repo.severity === 'critical' || repo.severity === 'warning'
-    case 'uncommitted': return git !== null && git.workingTree.staged + git.workingTree.unstaged + git.workingTree.untracked > 0
-    case 'unpushed': return git !== null && (git.ahead > 0 || repo.attention.some(item => item.code === 'unpushed-branches' || item.code === 'no-upstream'))
-    case 'behind': return git !== null && git.behind > 0
+    case 'uncommitted': return checkouts(repo).some(({ workingTree }) => workingTree.staged + workingTree.unstaged + workingTree.untracked > 0)
+    case 'unpushed': return checkouts(repo).some(checkout => checkout.ahead > 0) || repo.attention.some(item => item.code === 'unpushed-branches' || item.code === 'no-upstream')
+    case 'behind': return checkouts(repo).some(checkout => checkout.behind > 0)
     case 'ci-failing': return hasFailingCi(repo)
     case 'prs': return (repo.github?.pullRequests.length ?? 0) > 0
     case 'clean': return repo.severity === null
@@ -48,7 +52,7 @@ export function filterRepos(repos: RepoStatus[], filter: RepoFilter, search: str
     if (!matchesFilter(repo, filter)) return false
     if (!needle) return true
     return repo.name.toLowerCase().includes(needle)
-      || (repo.git?.branch ?? '').toLowerCase().includes(needle)
+      || checkouts(repo).some(checkout => (checkout.branch ?? '').toLowerCase().includes(needle))
       || (repo.github?.pullRequests.some(pull => pull.title.toLowerCase().includes(needle)) ?? false)
   })
 }

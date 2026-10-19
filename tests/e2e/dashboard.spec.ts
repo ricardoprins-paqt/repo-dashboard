@@ -23,6 +23,7 @@ test('shows the summary, the decision list and every repository', async ({ page 
   const decisions = page.getByRole('region', { name: /What needs a decision/ })
   await expect(decisions).toContainText('CI is failing on develop')
   await expect(decisions).toContainText('2 commits not pushed')
+  await expect(decisions).toContainText('Session 4: Branch feature/signup is not pushed anywhere')
 
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
   expect(errors).toEqual([])
@@ -55,6 +56,14 @@ test('opens the detail panel with changes, pull requests and CI', async ({ page 
   await page.getByRole('tab', { name: 'Changes' }).click()
   await expect(panel).toContainText('src/login.ts')
   await expect(panel).toContainText('Add login form')
+
+  await page.getByRole('tab', { name: 'Worktrees (1)' }).click()
+  await expect(panel).toContainText('Session 4')
+  await expect(panel).toContainText('/work/lss-001-claude-workspace-4/widgets')
+  await expect(panel).toContainText('src/signup.ts')
+
+  await page.getByRole('tab', { name: 'Branches' }).click()
+  await expect(panel).toContainText('develop')
 
   await page.getByRole('tab', { name: /PRs/ }).click()
   await expect(panel).toContainText('#12 Add login')

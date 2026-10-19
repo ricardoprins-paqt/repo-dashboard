@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { computeAttention, highestSeverity } from '../../server/lib/attention'
-import type { BranchInfo, GitInfo, GithubInfo, PullRequestInfo } from '../../shared/types/repo'
+import { computeAttention, computeWorktreeAttention, highestSeverity } from '../../server/lib/attention'
+import type { BranchInfo, GitInfo, GithubInfo, PullRequestInfo, WorktreeInfo } from '../../shared/types/repo'
 
 function makeGit(overrides: Partial<GitInfo> = {}): GitInfo {
   return {
@@ -20,12 +20,23 @@ function makeGit(overrides: Partial<GitInfo> = {}): GitInfo {
     branches: [],
     remoteUrl: 'https://github.com/o/r.git',
     lastFetchedAt: null,
+    worktrees: [],
+    ...overrides,
+  }
+}
+
+function makeWorktree(overrides: Partial<WorktreeInfo> = {}): WorktreeInfo {
+  return {
+    path: '/w/lss-001-claude-workspace-4/r', label: 'Session 4', missing: false, branch: 'topic', detached: false, headSha: 'abc',
+    upstream: 'origin/topic', ahead: 0, behind: 0, vsDefault: null, orphanCommits: 0,
+    workingTree: { staged: 0, unstaged: 0, untracked: 0, conflicted: 0, files: [], filesTruncated: false },
+    lastCommit: null, unpushed: [], gitError: null, attention: [],
     ...overrides,
   }
 }
 
 function makeBranch(overrides: Partial<BranchInfo> = {}): BranchInfo {
-  return { name: 'topic', current: false, upstream: 'origin/topic', upstreamGone: false, ahead: 0, behind: 0, merged: false, lastCommitDate: '', ...overrides }
+  return { name: 'topic', current: false, upstream: 'origin/topic', upstreamGone: false, ahead: 0, behind: 0, merged: false, lastCommitDate: '', worktreePath: null, ...overrides }
 }
 
 function makePull(overrides: Partial<PullRequestInfo> = {}): PullRequestInfo {
@@ -106,6 +117,41 @@ describe('computeAttention (git)', () => {
     const items = computeAttention(makeGit({ branches: [makeBranch({ name: 'done', upstream: null, merged: true })] }), null)
 
     expect(codes(items)).toEqual(['stale-branches'])
+  })
+})
+
+describe('computeWorktreeAttention', () => {
+  it('applies the checkout rules and labels every finding with the worktree', () => {
+    const items = computeWorktreeAttention(makeWorktree({ ahead: 2, workingTree: { staged: 1, unstaged: 0, untracked: 3, conflicted: 0, files: [], filesTruncated: false } }), 'develop')
+
+    expect(codes(items)).toEqual(['unpushed', 'dirty', 'untracked'])
+    expect(items.every(item => item.worktree === 'Session 4')).toBe(true)
+  })
+
+  it('accepts a detached HEAD unless it holds commits no branch contains', () => {
+    expect(computeWorktreeAttention(makeWorktree({ branch: null, detached: true, upstream: null }), 'develop')).toEqual([])
+    expect(computeWorktreeAttention(makeWorktree({ branch: null, detached: true, upstream: null, orphanCommits: 2 }), 'develop')[0]).toMatchObject({
+      code: 'detached', severity: 'warning', message: '2 commits on a detached HEAD that no branch contains',
+    })
+  })
+
+  it('reports a missing folder and git errors instead of checkout state', () => {
+    expect(codes(computeWorktreeAttention(makeWorktree({ missing: true, ahead: 3 }), 'develop'))).toEqual(['worktree-missing'])
+    expect(codes(computeWorktreeAttention(makeWorktree({ gitError: 'boom', ahead: 3 }), 'develop'))).toEqual(['git-error'])
+  })
+})
+
+describe('computeAttention (worktrees)', () => {
+  it('includes the worktree findings and leaves branches checked out in a worktree to them', () => {
+    const worktree = makeWorktree({ branch: 'wip', upstream: null })
+    worktree.attention = computeWorktreeAttention(worktree, 'develop')
+    const git = makeGit({
+      worktrees: [worktree],
+      branches: [makeBranch({ name: 'wip', upstream: null, worktreePath: worktree.path }), makeBranch({ name: 'old', merged: true, worktreePath: worktree.path })],
+    })
+    const items = computeAttention(git, null)
+
+    expect(items).toEqual([{ severity: 'warning', code: 'no-upstream', message: 'Branch wip is not pushed anywhere', worktree: 'Session 4' }])
   })
 })
 

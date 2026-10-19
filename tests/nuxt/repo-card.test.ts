@@ -23,6 +23,7 @@ describe('RepoCard', () => {
       expect(text).toContain('1 PR')
       expect(text).toContain('CI failing')
       expect(text).toContain('CI is failing on develop')
+      expect(text).toContain('1 worktree')
       expect(wrapper.find('svg[aria-label="Critical"]').exists()).toBe(true)
     }
     finally {

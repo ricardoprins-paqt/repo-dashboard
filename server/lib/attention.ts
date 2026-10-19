@@ -1,39 +1,71 @@
-import type { AttentionItem, GitInfo, GithubInfo, Severity } from '../../shared/types/repo.ts'
+import type { AttentionItem, GitInfo, GithubInfo, Severity, WorktreeInfo } from '../../shared/types/repo.ts'
 
 const SEVERITY_RANK: Record<Severity, number> = { critical: 0, warning: 1, info: 2 }
 
 const plural = (count: number, word: string) => `${count} ${count === 1 ? word : /(s|sh|ch|x)$/.test(word) ? `${word}es` : `${word}s`}`
 
+type Add = (severity: Severity, code: string, message: string) => void
+type Checkout = Pick<GitInfo, 'branch' | 'detached' | 'upstream' | 'ahead' | 'behind' | 'vsDefault' | 'workingTree'>
+
+/** Rules for one checkout's own state: the main checkout and every linked worktree. */
+function checkoutAttention(checkout: Checkout, defaultBranch: string | null, add: Add) {
+  const tree = checkout.workingTree
+  if (tree.conflicted > 0) add('critical', 'conflicts', `${plural(tree.conflicted, 'file')} with merge conflicts`)
+
+  if (checkout.upstream && checkout.ahead > 0 && checkout.behind > 0) {
+    add('critical', 'diverged', `Diverged from ${checkout.upstream}: ${checkout.ahead} ahead, ${checkout.behind} behind`)
+  }
+  else if (checkout.upstream && checkout.ahead > 0) {
+    add('warning', 'unpushed', `${plural(checkout.ahead, 'commit')} not pushed to ${checkout.upstream}`)
+  }
+  else if (checkout.upstream && checkout.behind > 0) {
+    add('warning', 'behind', `${plural(checkout.behind, 'commit')} behind ${checkout.upstream}, pull needed`)
+  }
+  if (!checkout.upstream && checkout.branch && !checkout.detached) {
+    const extra = checkout.vsDefault && checkout.vsDefault.ahead > 0 ? ` (${plural(checkout.vsDefault.ahead, 'commit')} ahead of ${defaultBranch})` : ''
+    add('warning', 'no-upstream', `Branch ${checkout.branch} is not pushed anywhere${extra}`)
+  }
+
+  const dirty = tree.staged + tree.unstaged
+  if (dirty > 0) add('warning', 'dirty', `${plural(dirty, 'uncommitted change')} (${tree.staged} staged, ${tree.unstaged} unstaged)`)
+  if (tree.untracked > 0) add('info', 'untracked', `${plural(tree.untracked, 'untracked path')}`)
+}
+
+/**
+ * Findings for a linked worktree. A detached HEAD on its own is normal there (paqt-ws checks
+ * out the default branch detached), so it only counts when it holds commits no branch has.
+ */
+export function computeWorktreeAttention(worktree: WorktreeInfo, defaultBranch: string | null): AttentionItem[] {
+  const items: AttentionItem[] = []
+  const add: Add = (severity, code, message) => items.push({ severity, code, message, worktree: worktree.label })
+
+  if (worktree.missing) {
+    add('info', 'worktree-missing', `Folder ${worktree.path} is gone, \`git worktree prune\` removes the entry`)
+  }
+  else if (worktree.gitError) {
+    add('warning', 'git-error', worktree.gitError)
+  }
+  else {
+    checkoutAttention(worktree, defaultBranch, add)
+    if (worktree.orphanCommits > 0) {
+      add('warning', 'detached', `${plural(worktree.orphanCommits, 'commit')} on a detached HEAD that no branch contains`)
+    }
+  }
+  return items.sort((a, b) => SEVERITY_RANK[a.severity] - SEVERITY_RANK[b.severity])
+}
+
 /**
  * Turns raw git and GitHub data into a ranked list of things worth a decision.
  * Pure function so the rules can be tested without touching a repository.
+ * Linked worktrees contribute the findings in their own `attention`.
  */
 export function computeAttention(git: GitInfo | null, github: GithubInfo | null): AttentionItem[] {
   const items: AttentionItem[] = []
-  const add = (severity: Severity, code: string, message: string) => items.push({ severity, code, message })
+  const add: Add = (severity, code, message) => items.push({ severity, code, message })
 
   if (git) {
-    const tree = git.workingTree
-    if (tree.conflicted > 0) add('critical', 'conflicts', `${plural(tree.conflicted, 'file')} with merge conflicts`)
+    checkoutAttention(git, git.defaultBranch, add)
     if (git.detached) add('warning', 'detached', 'HEAD is detached, commits made here belong to no branch')
-
-    if (git.upstream && git.ahead > 0 && git.behind > 0) {
-      add('critical', 'diverged', `Diverged from ${git.upstream}: ${git.ahead} ahead, ${git.behind} behind`)
-    }
-    else if (git.upstream && git.ahead > 0) {
-      add('warning', 'unpushed', `${plural(git.ahead, 'commit')} not pushed to ${git.upstream}`)
-    }
-    else if (git.upstream && git.behind > 0) {
-      add('warning', 'behind', `${plural(git.behind, 'commit')} behind ${git.upstream}, pull needed`)
-    }
-    if (!git.upstream && git.branch && !git.detached) {
-      const extra = git.vsDefault && git.vsDefault.ahead > 0 ? ` (${plural(git.vsDefault.ahead, 'commit')} ahead of ${git.defaultBranch})` : ''
-      add('warning', 'no-upstream', `Branch ${git.branch} is not pushed anywhere${extra}`)
-    }
-
-    const dirty = tree.staged + tree.unstaged
-    if (dirty > 0) add('warning', 'dirty', `${plural(dirty, 'uncommitted change')} (${tree.staged} staged, ${tree.unstaged} unstaged)`)
-    if (tree.untracked > 0) add('info', 'untracked', `${plural(tree.untracked, 'untracked path')}`)
     if (git.stashCount > 0) add('info', 'stash', `${plural(git.stashCount, 'stash')} saved`)
 
     if (git.defaultBranch && git.branch && git.branch !== git.defaultBranch) {
@@ -41,7 +73,8 @@ export function computeAttention(git: GitInfo | null, github: GithubInfo | null)
       add('info', 'off-default', `On ${git.branch}, not ${git.defaultBranch}${behind > 0 ? ` (${behind} behind it)` : ''}`)
     }
 
-    const otherBranches = git.branches.filter(branch => !branch.current)
+    // Branches checked out in a worktree are covered by that worktree's own findings.
+    const otherBranches = git.branches.filter(branch => !branch.current && !branch.worktreePath)
     const unpushedBranches = otherBranches.filter(branch => !branch.merged && (branch.ahead > 0 || (!branch.upstream && !branch.upstreamGone)))
     if (unpushedBranches.length > 0) {
       add('warning', 'unpushed-branches', `Local branches with unpushed work: ${unpushedBranches.map(branch => branch.name).join(', ')}`)
@@ -50,6 +83,8 @@ export function computeAttention(git: GitInfo | null, github: GithubInfo | null)
     if (cleanup.length > 0) {
       add('info', 'stale-branches', `${plural(cleanup.length, 'local branch')} can be deleted (merged or removed upstream)`)
     }
+
+    for (const worktree of git.worktrees) items.push(...worktree.attention)
   }
 
   if (github) {

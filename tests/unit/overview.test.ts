@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { filterRepos, relativeTime, sortRepos, summarize } from '../../app/utils/overview'
+import { makeGit, makeWorktree } from '../fixtures/overview'
 import type { RepoOverview, RepoStatus } from '../../shared/types/repo'
 
 function repo(name: string, overrides: Partial<RepoStatus> = {}): RepoStatus {
@@ -35,6 +36,19 @@ describe('filterRepos', () => {
     expect(filterRepos(repos, 'attention', '').map(item => item.name)).toEqual(['broken', 'wip'])
     expect(filterRepos(repos, 'clean', '').map(item => item.name)).toEqual(['clean'])
     expect(filterRepos(repos, 'all', ' WIP ').map(item => item.name)).toEqual(['wip'])
+  })
+})
+
+describe('filterRepos with worktrees', () => {
+  it('counts changes, unpushed commits and branches of linked worktrees', () => {
+    const withWorktree = repo('shared', { git: makeGit({ worktrees: [makeWorktree({ branch: 'feature/signup', upstream: 'origin/feature/signup', ahead: 1, behind: 2 })] }) })
+    const plain = repo('plain', { git: makeGit() })
+    const repos = [withWorktree, plain]
+
+    expect(filterRepos(repos, 'uncommitted', '').map(item => item.name)).toEqual(['shared'])
+    expect(filterRepos(repos, 'unpushed', '').map(item => item.name)).toEqual(['shared'])
+    expect(filterRepos(repos, 'behind', '').map(item => item.name)).toEqual(['shared'])
+    expect(filterRepos(repos, 'all', 'signup').map(item => item.name)).toEqual(['shared'])
   })
 })
 

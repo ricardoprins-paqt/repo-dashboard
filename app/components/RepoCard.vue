@@ -123,6 +123,14 @@ const rawChanges = computed(() => (tree.value ? tree.value.staged + tree.value.u
           {{ git.stashCount }} stash
         </PDSBadge>
         <PDSBadge
+          v-if="git && git.worktrees.length > 0"
+          appearance="subtle"
+          size="sm"
+          :title="git.worktrees.map(worktree => `${worktree.label}: ${worktree.branch ?? 'detached HEAD'}`).join('\n')"
+        >
+          {{ git.worktrees.length }} worktree{{ git.worktrees.length === 1 ? '' : 's' }}
+        </PDSBadge>
+        <PDSBadge
           v-if="pulls.length > 0"
           color="info"
           appearance="subtle"
@@ -161,14 +169,17 @@ const rawChanges = computed(() => (tree.value ? tree.value.staged + tree.value.u
       >
         <li
           v-for="item in findings"
-          :key="item.code"
+          :key="`${item.worktree ?? ''}:${item.code}`"
           class="flex items-start gap-2"
         >
           <SeverityIcon
             :severity="item.severity"
             class="mt-0.5 shrink-0"
           />
-          <span>{{ item.message }}</span>
+          <span><span
+            v-if="item.worktree"
+            class="font-semibold"
+          >{{ item.worktree }}: </span>{{ item.message }}</span>
         </li>
         <li
           v-if="hiddenFindings > 0"

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { githubSlug, parseBranches, parseCommits, parseStatusV2, parseTrack } from '../../server/lib/git'
+import { githubSlug, parseBranches, parseCommits, parseStatusV2, parseTrack, parseWorktreeList, worktreeLabel } from '../../server/lib/git'
 
 const US = '\u001F'
 
@@ -64,16 +64,44 @@ describe('parseBranches', () => {
     const output = [
       ['main', 'origin/main', '', '2026-10-01T10:00:00+00:00', '*'],
       ['old', 'origin/old', '[gone]', '2026-01-01T10:00:00+00:00', ' '],
-      ['local-only', '', '', '2026-09-01T10:00:00+00:00', ' '],
+      ['local-only', '', '', '2026-09-01T10:00:00+00:00', ' ', '/w/lss-001-claude-workspace-2/r'],
     ].map(parts => parts.join(US)).join('\n')
 
     const branches = parseBranches(output, new Set(['old']))
+
+    expect(branches.map(branch => branch.worktreePath)).toEqual([null, null, '/w/lss-001-claude-workspace-2/r'])
 
     expect(branches.map(branch => [branch.name, branch.current, branch.merged, branch.upstreamGone, branch.upstream])).toEqual([
       ['main', true, false, false, 'origin/main'],
       ['old', false, true, true, 'origin/old'],
       ['local-only', false, false, false, null],
     ])
+  })
+})
+
+describe('parseWorktreeList', () => {
+  it('reads branches, detached and prunable worktrees', () => {
+    const output = [
+      'worktree /hub/r', 'HEAD aaa', 'branch refs/heads/develop', '',
+      'worktree /w/lss-001-claude-workspace-1/r', 'HEAD bbb', 'detached', '',
+      'worktree /w/lss-001-claude-workspace-4/r', 'HEAD ccc', 'branch refs/heads/feature/x', 'prunable gitdir file points to non-existent location', '',
+    ].join('\n')
+
+    expect(parseWorktreeList(output)).toEqual([
+      { path: '/hub/r', head: 'aaa', branch: 'develop', detached: false, bare: false, prunable: false },
+      { path: '/w/lss-001-claude-workspace-1/r', head: 'bbb', branch: null, detached: true, bare: false, prunable: false },
+      { path: '/w/lss-001-claude-workspace-4/r', head: 'ccc', branch: 'feature/x', detached: false, bare: false, prunable: true },
+    ])
+  })
+})
+
+describe('worktreeLabel', () => {
+  it.each([
+    ['/home/ada/workspace/lss-001-claude-workspace-12/paqt-ds', 'Session 12'],
+    ['/home/ada/projects/paqt-ds-wt', '~/projects/paqt-ds-wt'],
+    ['/srv/paqt-ds', '/srv/paqt-ds'],
+  ])('%j -> %j', (path, label) => {
+    expect(worktreeLabel(path, '/home/ada')).toBe(label)
   })
 })
 

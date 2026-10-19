@@ -1,4 +1,4 @@
-import type { GitInfo, RepoOverview, RepoStatus } from '../../shared/types/repo'
+import type { GitInfo, RepoOverview, RepoStatus, WorktreeInfo } from '../../shared/types/repo'
 
 export function makeGit(overrides: Partial<GitInfo> = {}): GitInfo {
   return {
@@ -15,9 +15,42 @@ export function makeGit(overrides: Partial<GitInfo> = {}): GitInfo {
     lastCommit: { hash: 'abc1234', subject: 'Initial commit', author: 'Ada', date: '2026-10-15T10:00:00+00:00' },
     unpushed: [],
     incoming: [],
-    branches: [{ name: 'develop', current: true, upstream: 'origin/develop', upstreamGone: false, ahead: 0, behind: 0, merged: false, lastCommitDate: '2026-10-15T10:00:00+00:00' }],
+    branches: [{ name: 'develop', current: true, upstream: 'origin/develop', upstreamGone: false, ahead: 0, behind: 0, merged: false, lastCommitDate: '2026-10-15T10:00:00+00:00', worktreePath: '/work/widgets' }],
     remoteUrl: 'https://github.com/acme/widgets.git',
     lastFetchedAt: '2026-10-16T08:00:00.000Z',
+    worktrees: [],
+    ...overrides,
+  }
+}
+
+export function makeWorktree(overrides: Partial<WorktreeInfo> = {}): WorktreeInfo {
+  return {
+    path: '/work/lss-001-claude-workspace-4/widgets',
+    label: 'Session 4',
+    missing: false,
+    branch: 'feature/signup',
+    detached: false,
+    headSha: 'def5678',
+    upstream: null,
+    ahead: 0,
+    behind: 0,
+    vsDefault: { ahead: 1, behind: 0 },
+    orphanCommits: 0,
+    workingTree: {
+      staged: 0,
+      unstaged: 1,
+      untracked: 0,
+      conflicted: 0,
+      files: [{ path: 'src/signup.ts', index: '.', worktree: 'M', kind: 'unstaged' }],
+      filesTruncated: false,
+    },
+    lastCommit: { hash: 'def5678', subject: 'Start signup', author: 'Ada', date: '2026-10-16T07:30:00+00:00' },
+    unpushed: [],
+    gitError: null,
+    attention: [
+      { severity: 'warning', code: 'no-upstream', message: 'Branch feature/signup is not pushed anywhere (1 commit ahead of develop)', worktree: 'Session 4' },
+      { severity: 'warning', code: 'dirty', message: '1 uncommitted change (0 staged, 1 unstaged)', worktree: 'Session 4' },
+    ],
     ...overrides,
   }
 }
@@ -41,6 +74,7 @@ export const brokenRepo: RepoStatus = {
       filesTruncated: false,
     },
     unpushed: [{ hash: 'f00ba12', subject: 'Add login form', author: 'Ada', date: '2026-10-16T07:00:00+00:00' }],
+    worktrees: [makeWorktree()],
   }),
   github: {
     slug: 'acme/widgets',
@@ -64,6 +98,7 @@ export const brokenRepo: RepoStatus = {
     { severity: 'critical', code: 'ci-default-failing', message: 'CI is failing on develop' },
     { severity: 'warning', code: 'unpushed', message: '2 commits not pushed to origin/feature/login' },
     { severity: 'warning', code: 'dirty', message: '2 uncommitted changes (1 staged, 1 unstaged)' },
+    ...makeWorktree().attention,
   ],
   severity: 'critical',
   collectedAt: '2026-10-16T08:00:00.000Z',

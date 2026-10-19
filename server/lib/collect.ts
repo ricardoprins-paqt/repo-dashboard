@@ -2,9 +2,10 @@ import { readdir } from 'node:fs/promises'
 import { homedir } from 'node:os'
 import { basename, join, resolve } from 'node:path'
 import type { RepoOverview, RepoStatus } from '../../shared/types/repo.ts'
-import { computeAttention, highestSeverity } from './attention.ts'
+import { computeAttention, computeWorktreeAttention, highestSeverity } from './attention.ts'
 import { collectGit, fetchRepo, githubSlug, isGitRepo } from './git.ts'
 import { collectGithub, fetchViewer } from './github.ts'
+import { pool } from './pool.ts'
 
 const CONCURRENCY = 4
 
@@ -32,18 +33,6 @@ export async function discoverRepos(roots: string[]): Promise<Array<{ root: stri
     }
   }
   return found.sort((a, b) => a.name.localeCompare(b.name))
-}
-
-async function pool<T, R>(items: T[], limit: number, worker: (item: T) => Promise<R>): Promise<R[]> {
-  const results: R[] = new Array(items.length)
-  let next = 0
-  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, async () => {
-    while (next < items.length) {
-      const index = next++
-      results[index] = await worker(items[index] as T)
-    }
-  }))
-  return results
 }
 
 const message = (error: unknown) => (error instanceof Error ? error.message.split('\n')[0] ?? error.message : String(error))
@@ -91,6 +80,9 @@ async function collectRepo(repo: { root: string, path: string, name: string }, o
     }
   }
 
+  if (gitInfo) {
+    for (const worktree of gitInfo.worktrees) worktree.attention = computeWorktreeAttention(worktree, gitInfo.defaultBranch)
+  }
   const attention = computeAttention(gitInfo, github)
   if (gitError) attention.unshift({ severity: 'warning', code: 'git-error', message: gitError })
 

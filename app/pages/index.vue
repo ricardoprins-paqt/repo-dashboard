@@ -58,6 +58,8 @@ function setFilter(next: RepoFilter) {
       href="#main-content"
     >Skip to content</a>
 
+    <DataSyncBanner />
+
     <header class="border-b border-border bg-surface">
       <div class="mx-auto flex w-full max-w-[84rem] flex-wrap items-center gap-x-6 gap-y-3 px-4 py-4 sm:px-8">
         <NuxtLink

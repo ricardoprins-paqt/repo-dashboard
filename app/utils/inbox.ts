@@ -33,3 +33,18 @@ export function needsYouList(entries: InboxEntry[], kinds: ReadonlySet<ItemKind>
       return KIND_RANK[a.item.kind] - KIND_RANK[b.item.kind] || byDate(a, b)
     })
 }
+
+/**
+ * What a click on a kind does. A plain click shows only that kind; clicking the only kind shown brings all of them back.
+ * With cmd/ctrl (additive) it adds or removes that kind; removing the last one shows all again (never an empty filter).
+ */
+export function nextKinds(current: ReadonlySet<ItemKind>, kind: ItemKind, additive: boolean, all: readonly ItemKind[]): Set<ItemKind> {
+  if (additive) {
+    const next = new Set(current)
+    if (next.has(kind)) next.delete(kind)
+    else next.add(kind)
+    return next.size ? next : new Set(all)
+  }
+  const onlyThis = current.size === 1 && current.has(kind)
+  return onlyThis ? new Set(all) : new Set([kind])
+}

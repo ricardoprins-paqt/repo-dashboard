@@ -88,12 +88,11 @@ watch([shownKinds, sort], () => {
     // Not remembered this time.
   }
 }, { deep: true })
-function toggleKind(kind: ItemKind) {
-  const next = new Set(shownKinds.value)
-  if (next.has(kind)) next.delete(kind)
-  else next.add(kind)
-  shownKinds.value = next
+// Click: only this kind (again: all). Cmd/ctrl-click: add or remove it.
+function clickKind(kind: ItemKind, event: MouseEvent) {
+  shownKinds.value = nextKinds(shownKinds.value, kind, event.metaKey || event.ctrlKey, INBOX_KINDS.map(k => k.kind))
 }
+const allShown = computed(() => shownKinds.value.size === INBOX_KINDS.length)
 const kindCount = (kind: ItemKind) => allNeedsYou.value.filter(({ item }) => item.kind === kind).length
 const needsYou = computed(() => needsYouList(allNeedsYou.value, shownKinds.value, sort.value))
 const hiddenCount = computed(() => allNeedsYou.value.length - needsYou.value.length)
@@ -228,13 +227,16 @@ function renderHandoff(md: string) {
             size="sm"
             :appearance="shownKinds.has(k.kind) ? undefined : 'outlined'"
             :color="shownKinds.has(k.kind) ? 'brand' : undefined"
-            @click="toggleKind(k.kind)"
+            @click="(event: MouseEvent) => clickKind(k.kind, event)"
           >
             {{ k.label }} ({{ kindCount(k.kind) }})<span
               v-if="!shownKinds.has(k.kind)"
               class="sr-only"
             > (hidden)</span>
           </PDSButton>
+          <span class="self-center text-xs text-foreground-muted">
+            {{ allShown ? 'Click a type to see only that one; ⌘/Ctrl-click to add another' : 'Click it again for all types · ⌘/Ctrl-click to add or remove one' }}
+          </span>
         </div>
         <p
           v-if="!needsYou.length"

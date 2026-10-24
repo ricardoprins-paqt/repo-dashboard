@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { InboxItem, InboxTask, ItemKind } from '#shared/types/inbox'
-import { needsYouList } from '../../app/utils/inbox'
+import { needsYouList, nextKinds } from '../../app/utils/inbox'
 
 const task = { id: 1 } as InboxTask
 const entry = (id: number, kind: ItemKind, created: string, needs_you = true) => ({ item: { id, kind, created, needs_you } as InboxItem, task })
@@ -24,5 +24,22 @@ describe('needsYouList', () => {
   })
   it('only shows the kinds that are switched on, and only what needs Ricardo', () => {
     expect(ids(needsYouList(entries, new Set<ItemKind>(['review', 'fyi', 'conflict']), 'kind'))).toEqual([3, 1])
+  })
+})
+
+describe('nextKinds', () => {
+  const ALL: ItemKind[] = ['decision', 'question', 'conflict', 'review', 'fyi']
+  const list = (s: Set<ItemKind>) => [...s].sort()
+  it('a click shows only that kind, and clicking it again shows all', () => {
+    const one = nextKinds(new Set(ALL), 'review', false, ALL)
+    expect(list(one)).toEqual(['review'])
+    expect(list(nextKinds(one, 'review', false, ALL))).toEqual([...ALL].sort())
+    expect(list(nextKinds(one, 'fyi', false, ALL))).toEqual(['fyi'])
+  })
+  it('cmd/ctrl-click adds or removes one kind, and never leaves nothing', () => {
+    const two = nextKinds(new Set<ItemKind>(['review']), 'conflict', true, ALL)
+    expect(list(two)).toEqual(['conflict', 'review'])
+    expect(list(nextKinds(two, 'review', true, ALL))).toEqual(['conflict'])
+    expect(list(nextKinds(new Set<ItemKind>(['conflict']), 'conflict', true, ALL))).toEqual([...ALL].sort())
   })
 })

@@ -1,0 +1,388 @@
+<script setup lang="ts">
+import type { ExperimentStatus, FunOverview } from '#shared/types/fun'
+
+useHead({ title: 'Fun loop · Repo Dashboard' })
+
+const { theme, toggle: toggleTheme } = useTheme()
+const { data, error, refresh } = await useFetch<FunOverview>('/api/fun')
+
+// The loop changes on its own (ticks, workers): keep the page current while it is open.
+let timer: ReturnType<typeof setInterval> | undefined
+function onVisible() {
+  if (!document.hidden) void refresh()
+}
+onMounted(() => {
+  timer = setInterval(refresh, 30000)
+  document.addEventListener('visibilitychange', onVisible)
+})
+onBeforeUnmount(() => {
+  clearInterval(timer)
+  document.removeEventListener('visibilitychange', onVisible)
+})
+
+const STATUS: Record<ExperimentStatus, { label: string, color?: 'success' | 'warning' | 'danger' | 'info' }> = {
+  'in-fun-main': { label: 'In fun/main', color: 'info' },
+  'needs-merge': { label: 'Needs merge', color: 'warning' },
+  'liked': { label: 'Liked', color: 'success' },
+  'rejected': { label: 'Rejected', color: 'danger' },
+  'outside-fun-main': { label: 'Not in fun/main' },
+}
+
+const fun = computed(() => data.value)
+const inFunMain = computed(() => fun.value?.experiments.filter(e => e.previewUrl).length ?? 0)
+const readyIdeas = computed(() => fun.value?.ideas.filter(i => i.status === 'ready' || i.status === 'next').length ?? 0)
+const byRepo = computed(() => {
+  const groups = new Map<string, FunOverview['experiments']>()
+  for (const e of fun.value?.experiments ?? []) groups.set(e.repo, [...(groups.get(e.repo) ?? []), e])
+  // Repos without anything in fun/main (paqt-ds-demo-healthcare) last.
+  const live = (list: FunOverview['experiments']) => (list.some(e => e.previewUrl) ? 0 : 1)
+  return [...groups.entries()].sort((a, b) => live(a[1]) - live(b[1]) || a[0].localeCompare(b[0]))
+})
+const nowLabel = computed(() => {
+  const w = fun.value?.worker
+  if (!w) return 'Idle'
+  return `${w.branch ?? w.idea ?? 'Working'}`
+})
+const nowHint = computed(() => {
+  const f = fun.value
+  if (!f) return ''
+  const parts = []
+  if (f.worker?.startedAt) parts.push(`started ${relativeTime(f.worker.startedAt)}`)
+  if (f.research?.startedAt) parts.push(`research running since ${relativeTime(f.research.startedAt)}`)
+  return parts.join(' · ') || 'no worker running'
+})
+const nextLabel = computed(() => {
+  const f = fun.value
+  if (!f) return '–'
+  if (f.paused) return 'Paused'
+  return f.nextTickAt ? relativeTime(f.nextTickAt) : 'soon'
+})
+const everyLabel = computed(() => {
+  const m = fun.value?.intervalMinutes ?? 60
+  return m % 60 === 0 ? `every ${m / 60 === 1 ? 'hour' : `${m / 60} hours`}` : `every ${m} minutes`
+})
+const time = (iso: string) => new Date(iso).toLocaleString('en-GB', { weekday: 'short', hour: '2-digit', minute: '2-digit' })
+</script>
+
+<template>
+  <div class="min-h-screen">
+    <a
+      class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-2 focus:z-10 focus:bg-black focus:p-3 focus:text-white"
+      href="#main-content"
+    >Skip to content</a>
+
+    <DataSyncBanner />
+
+    <header class="border-b border-border bg-surface">
+      <div class="mx-auto flex w-full max-w-[84rem] flex-wrap items-center gap-x-6 gap-y-3 px-4 py-4 sm:px-8">
+        <NuxtLink
+          to="/"
+          class="flex shrink-0"
+          aria-label="PAQT repo dashboard home"
+        >
+          <img
+            class="dark:invert"
+            src="/logo.svg"
+            width="110"
+            height="24"
+            alt="PAQT"
+          >
+        </NuxtLink>
+        <span
+          class="hidden h-6 border-l border-border sm:block"
+          aria-hidden="true"
+        />
+        <div class="min-w-0">
+          <h1 class="text-base font-semibold leading-tight">
+            Fun loop
+          </h1>
+          <p class="text-xs text-foreground-muted">
+            Session {{ fun?.session }} · {{ everyLabel }}<template v-if="fun?.pinnedAt">
+              · develop pinned {{ fun.pinnedAt }}
+            </template>
+          </p>
+        </div>
+        <nav
+          class="ml-auto flex flex-wrap items-center gap-3"
+          aria-label="Pages"
+        >
+          <NuxtLink
+            to="/"
+            class="text-sm underline"
+          >Repositories</NuxtLink>
+          <PDSButton
+            appearance="outlined"
+            square
+            @click="toggleTheme"
+          >
+            <PDSIcon
+              :name="theme === 'dark' ? 'lucide:sun' : 'lucide:moon'"
+              size="16"
+            />
+            <span class="sr-only">{{ theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode' }}</span>
+          </PDSButton>
+        </nav>
+      </div>
+    </header>
+
+    <main
+      id="main-content"
+      class="mx-auto flex w-full max-w-[84rem] flex-col gap-8 px-4 py-8 sm:px-8"
+    >
+      <p
+        v-if="error || (fun && !fun.available)"
+        role="alert"
+        class="text-danger-text"
+      >
+        Could not read the fun loop: {{ fun?.error ?? error?.message }}
+      </p>
+
+      <template v-if="fun?.available">
+        <section aria-labelledby="now-heading">
+          <h2
+            id="now-heading"
+            class="sr-only"
+          >
+            Now
+          </h2>
+          <div class="grid grid-cols-2 gap-3 md:grid-cols-4">
+            <PDSCard appearance="outlined">
+              <div class="flex flex-col gap-1">
+                <span class="text-xs font-semibold uppercase tracking-wide text-foreground-muted">Now</span>
+                <span
+                  class="truncate text-xl font-semibold"
+                  data-testid="fun-now"
+                >{{ nowLabel }}</span>
+                <span class="text-xs text-foreground-muted">{{ nowHint }}</span>
+              </div>
+            </PDSCard>
+            <PDSCard appearance="outlined">
+              <div class="flex flex-col gap-1">
+                <span class="text-xs font-semibold uppercase tracking-wide text-foreground-muted">Next tick</span>
+                <span
+                  class="text-xl font-semibold"
+                  :class="{ 'text-warning-text': fun.paused }"
+                >{{ nextLabel }}</span>
+                <span class="text-xs text-foreground-muted">last {{ relativeTime(fun.lastTickAt) }}</span>
+              </div>
+            </PDSCard>
+            <PDSCard appearance="outlined">
+              <div class="flex flex-col gap-1">
+                <span class="text-xs font-semibold uppercase tracking-wide text-foreground-muted">In fun/main</span>
+                <span class="text-3xl font-semibold leading-none tabular-nums">{{ inFunMain }}</span>
+                <span class="text-xs text-foreground-muted">{{ fun.experiments.length }} experiments in total</span>
+              </div>
+            </PDSCard>
+            <PDSCard appearance="outlined">
+              <div class="flex flex-col gap-1">
+                <span class="text-xs font-semibold uppercase tracking-wide text-foreground-muted">Ideas ready</span>
+                <span class="text-3xl font-semibold leading-none tabular-nums">{{ readyIdeas }}</span>
+                <span class="text-xs text-foreground-muted">research {{ fun.lastResearchAt ? relativeTime(fun.lastResearchAt) : 'not run yet' }}</span>
+              </div>
+            </PDSCard>
+          </div>
+          <p class="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm">
+            <span class="text-foreground-muted">Everything in fun/main:</span>
+            <a
+              v-for="p in fun.previews"
+              :key="p.app"
+              :href="p.url"
+              target="_blank"
+              rel="noopener"
+              class="underline"
+            >{{ p.app }}</a>
+          </p>
+        </section>
+
+        <section
+          v-for="[repo, experiments] in byRepo"
+          :key="repo"
+          :aria-labelledby="`repo-${repo}`"
+          class="flex flex-col gap-3"
+        >
+          <h2
+            :id="`repo-${repo}`"
+            class="text-lg font-semibold"
+          >
+            {{ repo }}
+          </h2>
+          <ul class="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            <li
+              v-for="e in experiments"
+              :key="e.id"
+              :data-testid="`experiment-${e.id}`"
+            >
+              <PDSCard
+                appearance="outlined"
+                class="h-full"
+              >
+                <div class="flex h-full flex-col gap-2">
+                  <div class="flex items-start justify-between gap-2">
+                    <h3 class="font-semibold">
+                      {{ e.name }}
+                    </h3>
+                    <PDSBadge
+                      size="sm"
+                      appearance="subtle"
+                      :color="STATUS[e.status]?.color"
+                    >
+                      {{ STATUS[e.status]?.label ?? e.status }}
+                    </PDSBadge>
+                  </div>
+                  <p class="text-sm">
+                    {{ e.description }}
+                  </p>
+                  <p
+                    v-if="e.note"
+                    class="text-xs text-foreground-muted"
+                  >
+                    {{ e.note }}
+                  </p>
+                  <div class="mt-auto flex flex-wrap items-center gap-x-4 gap-y-1 pt-1 text-sm">
+                    <a
+                      v-if="e.previewUrl"
+                      :href="e.previewUrl"
+                      target="_blank"
+                      rel="noopener"
+                      class="inline-flex items-center gap-1 font-semibold underline"
+                    >
+                      <PDSIcon
+                        name="lucide:eye"
+                        size="14"
+                      />View
+                    </a>
+                    <a
+                      :href="e.prUrl"
+                      target="_blank"
+                      rel="noopener"
+                      class="inline-flex items-center gap-1 underline"
+                    >
+                      <PDSIcon
+                        name="lucide:git-pull-request"
+                        size="14"
+                      />PR #{{ e.pr }}
+                    </a>
+                    <span class="ml-auto font-mono text-xs text-foreground-muted">{{ e.branch }}</span>
+                  </div>
+                </div>
+              </PDSCard>
+            </li>
+          </ul>
+        </section>
+
+        <section
+          aria-labelledby="ideas-heading"
+          class="flex flex-col gap-3"
+        >
+          <h2
+            id="ideas-heading"
+            class="text-lg font-semibold"
+          >
+            Backlog
+          </h2>
+          <p
+            v-if="!fun.ideas.length"
+            class="text-sm text-foreground-muted"
+          >
+            No ideas yet: the first research run fills the backlog.
+          </p>
+          <ol
+            v-else
+            class="flex flex-col divide-y divide-border rounded border border-border"
+          >
+            <li
+              v-for="i in fun.ideas.slice(0, 15)"
+              :key="i.id"
+              class="flex flex-wrap items-baseline gap-x-3 gap-y-1 px-4 py-2 text-sm"
+            >
+              <span
+                class="w-10 shrink-0 tabular-nums text-foreground-muted"
+                :title="`Value ${i.value} of 5`"
+              >{{ '★'.repeat(i.value) }}</span>
+              <span class="font-semibold">{{ i.title }}</span>
+              <span class="text-foreground-muted">{{ i.repo }}</span>
+              <PDSBadge
+                v-if="i.status !== 'ready'"
+                size="sm"
+                appearance="subtle"
+                :color="i.status === 'next' ? 'info' : i.status === 'doing' ? 'success' : undefined"
+              >
+                {{ i.status }}
+              </PDSBadge>
+              <span class="w-full text-foreground-muted">{{ i.description }}</span>
+            </li>
+          </ol>
+        </section>
+
+        <div class="grid gap-8 lg:grid-cols-2">
+          <section
+            aria-labelledby="runs-heading"
+            class="flex flex-col gap-3"
+          >
+            <h2
+              id="runs-heading"
+              class="text-lg font-semibold"
+            >
+              What the product owner did
+            </h2>
+            <p
+              v-if="!fun.runs.length"
+              class="text-sm text-foreground-muted"
+            >
+              Nothing yet.
+            </p>
+            <ul
+              v-else
+              class="flex flex-col gap-1 text-sm"
+            >
+              <li
+                v-for="r in fun.runs"
+                :key="`${r.at}-${r.kind}`"
+              >
+                <span class="tabular-nums text-foreground-muted">{{ time(r.at) }}</span>
+                · {{ r.kind }}<template v-if="r.branch || r.idea">
+                  {{ r.branch ?? r.idea }}
+                </template>: {{ r.result }}<template v-if="r.note">
+                  ({{ r.note }})
+                </template>
+              </li>
+            </ul>
+          </section>
+          <section
+            aria-labelledby="ticks-heading"
+            class="flex flex-col gap-3"
+          >
+            <h2
+              id="ticks-heading"
+              class="text-lg font-semibold"
+            >
+              Ticks
+            </h2>
+            <p
+              v-if="!fun.ticks.length"
+              class="text-sm text-foreground-muted"
+            >
+              No ticks yet.
+            </p>
+            <ul
+              v-else
+              class="flex flex-col gap-1 text-sm"
+            >
+              <li
+                v-for="t in fun.ticks"
+                :key="t.at"
+              >
+                <span class="tabular-nums text-foreground-muted">{{ time(t.at) }}</span>
+                · <span :class="{ 'text-danger-text': t.result === 'error' }">{{ t.result }}</span><template v-if="t.reason">
+                  : {{ t.reason }}
+                </template><template v-else-if="t.message">
+                  : {{ t.message.replace(/^\[[^\]]*\]\s*/, '') }}
+                </template>
+              </li>
+            </ul>
+          </section>
+        </div>
+      </template>
+    </main>
+  </div>
+</template>

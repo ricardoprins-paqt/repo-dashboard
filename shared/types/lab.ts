@@ -11,8 +11,9 @@ export interface LabExperiment {
   repo: string
   kind?: IdeaKind
   branch: string
-  app: string
-  previewPath: string
+  /** null for experiments without a page to show (e.g. an agent guide, a proposal). */
+  app: string | null
+  previewPath: string | null
   description: string
   pr: number
   prUrl: string

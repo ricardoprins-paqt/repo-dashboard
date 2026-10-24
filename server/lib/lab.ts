@@ -83,7 +83,7 @@ export function readLab(paths: LabPaths = defaultLabPaths()): LabOverview {
   const experiments = readJson<Omit<LabExperiment, 'previewUrl'>[]>(join(paths.loopDir, 'experiments.json'), [])
     .map(e => ({
       ...e,
-      previewUrl: e.status === 'in-lab-main' || e.status === 'liked' ? `${previewBase(e.app)}${e.previewPath}` : null,
+      previewUrl: (e.status === 'in-lab-main' || e.status === 'liked') && e.app && e.previewPath ? `${previewBase(e.app)}${e.previewPath}` : null,
     }))
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
   const ideas = readJson<LabIdea[]>(join(paths.loopDir, 'ideas.json'), [])

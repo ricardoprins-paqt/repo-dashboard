@@ -61,7 +61,7 @@ export function readFun(paths: FunPaths = defaultFunPaths()): FunOverview {
   const experiments = readJson<Omit<FunExperiment, 'previewUrl'>[]>(join(paths.loopDir, 'experiments.json'), [])
     .map(e => ({
       ...e,
-      previewUrl: e.status === 'in-fun-main' || e.status === 'liked' || e.status === 'needs-merge' ? `${previewBase(e.app)}${e.previewPath}` : null,
+      previewUrl: e.status === 'in-fun-main' || e.status === 'liked' ? `${previewBase(e.app)}${e.previewPath}` : null,
     }))
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
   const ideas = readJson<FunIdea[]>(join(paths.loopDir, 'ideas.json'), [])

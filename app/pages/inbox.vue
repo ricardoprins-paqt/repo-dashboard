@@ -109,6 +109,9 @@ const openTasks = computed(() => tasks.value.filter(t => t.status !== 'done' && 
 const closedTasks = computed(() => tasks.value.filter(t => t.status === 'done' || t.status === 'dropped'))
 const openCount = (t: InboxTask) => t.needs_you
 
+// "Add to backlog" only makes sense for a task in a loop session that keeps a backlog (the status service says which).
+const canBacklog = (task: InboxTask) => data.value?.sessions.some(s => s.n === task.session && s.backlog) ?? false
+
 // Session strip: what each session is on now.
 // Session strip: what each session is on now. Reserved, pinned, loop and free come from the status service.
 const sessions = computed(() => (data.value?.sessions ?? []).map(s => ({ ...s, task: tasks.value.find(t => t.id === s.task_id) })))
@@ -183,6 +186,13 @@ function renderHandoff(md: string) {
               >{{ s.status === 'busy' ? 'busy' : s.reserved ? 'reserved' : s.loop ? 'loop' : s.pinned ? 'yours' : s.free ? 'free' : s.status }}</span>
             </div>
             <span class="line-clamp-2 text-xs text-foreground-muted">{{ s.task?.title ?? s.name ?? 'No task' }}</span>
+            <span
+              v-for="a in s.activity"
+              :key="a.kind"
+              class="text-xs font-semibold text-info-text"
+            >{{ a.kind === 'worker' ? `Worker: ${a.label}` : 'Research running' }}<template v-if="a.since">
+              · {{ relativeTime(a.since) }}
+            </template></span>
             <button
               v-if="!s.reserved"
               type="button"
@@ -262,7 +272,8 @@ function renderHandoff(md: string) {
               :item="item"
               :task="task"
               :busy="busy"
-              @answer="answer => act({ action: 'answer', id: item.id, answer })"
+              :can-backlog="canBacklog(task)"
+              @answer="(answer: string, backlog: boolean) => act({ action: 'answer', id: item.id, answer, backlog })"
               @close="act({ action: 'close', id: item.id })"
               @snooze="act({ action: 'snooze', id: item.id, until: tomorrow() })"
             />

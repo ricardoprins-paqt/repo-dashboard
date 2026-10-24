@@ -1,9 +1,15 @@
 <script setup lang="ts">
 import type { InboxItem, InboxTask } from '#shared/types/inbox'
 
-const props = defineProps<{ item: InboxItem, task: InboxTask, busy: boolean }>()
+const props = defineProps<{
+  item: InboxItem
+  task: InboxTask
+  busy: boolean
+  /** The task's session runs a loop with a backlog (the lab PO): offer "add to backlog" instead of doing it now. */
+  canBacklog?: boolean
+}>()
 const emit = defineEmits<{
-  answer: [answer: string]
+  answer: [answer: string, backlog: boolean]
   close: []
   snooze: []
 }>()
@@ -17,6 +23,7 @@ const KIND = {
 } as const
 
 const text = ref('')
+const backlog = ref(false)
 const answerable = computed(() => props.item.kind === 'decision' || props.item.kind === 'question' || props.item.options.length > 0)
 const waitingForDelivery = computed(() => props.item.status === 'answered')
 
@@ -27,7 +34,7 @@ function anchorLabel(a: InboxItem['anchors'][number]) {
 }
 function send() {
   if (!text.value.trim()) return
-  emit('answer', text.value.trim())
+  emit('answer', text.value.trim(), backlog.value)
   text.value = ''
 }
 </script>
@@ -86,7 +93,9 @@ function send() {
         v-if="waitingForDelivery"
         class="text-sm text-foreground-muted"
       >
-        You answered: <strong>{{ item.answer }}</strong>. Waiting until a session can take it.
+        You answered: <strong>{{ item.answer }}</strong><template v-if="item.backlog">
+          (add to backlog)
+        </template>. Waiting until a session can take it.
       </p>
       <template v-else>
         <div
@@ -103,11 +112,21 @@ function send() {
               size="sm"
               appearance="outlined"
               :disabled="busy"
-              @click="emit('answer', option)"
+              @click="emit('answer', option, backlog)"
             >
               {{ option }}
             </PDSButton>
           </div>
+          <label
+            v-if="canBacklog"
+            class="flex items-center gap-2 text-sm"
+          >
+            <input
+              v-model="backlog"
+              type="checkbox"
+            >
+            Add to backlog: do it at a later tick, not now
+          </label>
           <form
             class="flex gap-2"
             @submit.prevent="send"

@@ -23,6 +23,8 @@ export interface InboxItem {
   status: ItemStatus
   answer: string | null
   answered_at: string | null
+  /** Ricardo ticked "add to backlog": the loop session puts it in its backlog instead of doing it now. */
+  backlog: boolean
   delivered_at: string | null
   delivered_to: number | null
   snooze_until: string | null
@@ -70,6 +72,10 @@ export interface InboxSession {
   loop: boolean
   free: boolean
   task_id: number | null
+  /** The loop this session runs (pds-backlog loops/<name>), whether it keeps a backlog, and what runs inside it now. */
+  loop_name: string | null
+  backlog: boolean
+  activity: Array<{ kind: 'worker' | 'research' | string, label: string, since: string | null }>
 }
 
 export interface InboxOverview {

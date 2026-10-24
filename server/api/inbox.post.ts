@@ -1,6 +1,6 @@
 /**
  * `POST /api/inbox` with `{ action, ... }`:
- * - `answer` `{ id, answer }`: answer an item; the dispatcher delivers it to a session
+ * - `answer` `{ id, answer, backlog? }`: answer an item; the dispatcher delivers it to a session (backlog: "do it later")
  * - `close` `{ id, note? }`: mark an item done (also "Got it" on an FYI)
  * - `snooze` `{ id, until }`: hide an item until a time
  * - `task-close` `{ id, status: 'done' | 'dropped', note? }`
@@ -20,7 +20,7 @@ export default defineEventHandler(async (event) => {
   switch (body.action) {
     case 'answer':
       if (!String(body.answer ?? '').trim()) throw createError({ statusCode: 400, statusMessage: 'Empty answer' })
-      return await post('/api/inbox/answer', { id, answer: String(body.answer).trim() })
+      return await post('/api/inbox/answer', { id, answer: String(body.answer).trim(), backlog: Boolean(body.backlog) })
     case 'close':
       return await post('/api/inbox/item', { id, status: 'done', note: body.note ? String(body.note) : 'closed by Ricardo' })
     case 'snooze':

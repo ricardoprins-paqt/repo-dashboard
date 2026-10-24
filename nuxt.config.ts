@@ -28,6 +28,8 @@ export default defineNuxtConfig({
   build: {
     transpile: ['@paqtdesign/experimental'],
   },
+  // The page was called /fun before the loop became the lab loop.
+  routeRules: { '/fun': { redirect: '/lab' } },
   // Loopback only: the dashboard runs git and gh against local repos, so it must not be exposed on the network.
   devServer: { host: '127.0.0.1', port: 3178 },
   compatibilityDate: '2026-10-12',

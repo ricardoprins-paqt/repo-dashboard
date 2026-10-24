@@ -96,9 +96,9 @@ function setFilter(next: RepoFilter) {
         </div>
         <div class="ml-auto flex flex-wrap items-center gap-3">
           <NuxtLink
-            to="/fun"
+            to="/lab"
             class="text-sm underline"
-          >Fun loop</NuxtLink>
+          >Lab loop</NuxtLink>
           <!-- PDSToggle renders a stray `size` attribute on the server, which breaks hydration. -->
           <ClientOnly>
             <PDSToggle

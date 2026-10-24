@@ -1,11 +1,15 @@
-/** The fun loop (pds-backlog/loops/fun), as the `/fun` page shows it. */
+/** The lab loop (pds-backlog/loops/lab), as the `/lab` page shows it. */
 
-export type ExperimentStatus = 'in-fun-main' | 'needs-merge' | 'liked' | 'rejected' | 'outside-fun-main'
+export type ExperimentStatus = 'in-lab-main' | 'needs-merge' | 'liked' | 'rejected' | 'outside-lab-main'
 
-export interface FunExperiment {
+/** feature, ai-dx (helps agents and developers), gap (closes a gap with a competitor), challenge (becomes a proposal). */
+export type IdeaKind = 'feature' | 'ai-dx' | 'gap' | 'challenge'
+
+export interface LabExperiment {
   id: string
   name: string
   repo: string
+  kind?: IdeaKind
   branch: string
   app: string
   previewPath: string
@@ -16,13 +20,14 @@ export interface FunExperiment {
   origin: string
   createdAt: string
   note?: string
-  /** On the product owner's `fun/main` dev server; null when the experiment is not in `fun/main`. */
+  /** On the product owner's `lab/main` dev server; null when the experiment is not in `lab/main`. */
   previewUrl: string | null
 }
 
-export interface FunIdea {
+export interface LabIdea {
   id: string
   title: string
+  kind?: IdeaKind
   repo: string
   area?: string
   description: string
@@ -34,14 +39,24 @@ export interface FunIdea {
   addedAt?: string
 }
 
-export interface FunTick {
+/** A written proposal (loops/lab/proposals/<id>.md) for an idea that questions a fundamental choice. */
+export interface LabProposal {
+  id: string
+  title: string
+  status: 'draft' | 'accepted' | 'rejected' | string
+  /** The first paragraph of its Recommendation section. */
+  recommendation: string
+  url: string
+}
+
+export interface LabTick {
   at: string
   result: 'sent' | 'skipped' | 'error'
   reason?: string
   message?: string
 }
 
-export interface FunRun {
+export interface LabRun {
   at: string
   kind: string
   idea?: string
@@ -51,7 +66,7 @@ export interface FunRun {
   note?: string
 }
 
-export interface FunOverview {
+export interface LabOverview {
   available: boolean
   /** Why the loop could not be read, when `available` is false. */
   error?: string
@@ -66,10 +81,11 @@ export interface FunOverview {
   nextTickAt: string | null
   pinnedAt: string | null
   lastResearchAt: string | null
-  experiments: FunExperiment[]
-  ideas: FunIdea[]
-  ticks: FunTick[]
-  runs: FunRun[]
-  /** The `fun/main` dev servers, one per app. */
+  experiments: LabExperiment[]
+  ideas: LabIdea[]
+  proposals: LabProposal[]
+  ticks: LabTick[]
+  runs: LabRun[]
+  /** The `lab/main` dev servers, one per app. */
   previews: Array<{ app: string, url: string }>
 }

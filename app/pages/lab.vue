@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import type { ExperimentStatus, FunOverview } from '#shared/types/fun'
+import type { ExperimentStatus, IdeaKind, LabOverview } from '#shared/types/lab'
 
-useHead({ title: 'Fun loop · Repo Dashboard' })
+useHead({ title: 'Lab loop · Repo Dashboard' })
 
 const { theme, toggle: toggleTheme } = useTheme()
-const { data, error, refresh } = await useFetch<FunOverview>('/api/fun')
+const { data, error, refresh } = await useFetch<LabOverview>('/api/lab')
 
 // The loop changes on its own (ticks, workers): keep the page current while it is open.
 let timer: ReturnType<typeof setInterval> | undefined
@@ -21,21 +21,23 @@ onBeforeUnmount(() => {
 })
 
 const STATUS: Record<ExperimentStatus, { label: string, color?: 'success' | 'warning' | 'danger' | 'info' }> = {
-  'in-fun-main': { label: 'In fun/main', color: 'info' },
+  'in-lab-main': { label: 'In lab/main', color: 'info' },
   'needs-merge': { label: 'Needs merge', color: 'warning' },
   'liked': { label: 'Liked', color: 'success' },
   'rejected': { label: 'Rejected', color: 'danger' },
-  'outside-fun-main': { label: 'Not in fun/main' },
+  'outside-lab-main': { label: 'Not in lab/main' },
 }
 
+const KIND: Record<IdeaKind, string> = { 'feature': 'Feature', 'ai-dx': 'AI / DX', 'gap': 'Competitor gap', 'challenge': 'Proposal' }
+
 const fun = computed(() => data.value)
-const inFunMain = computed(() => fun.value?.experiments.filter(e => e.previewUrl).length ?? 0)
+const inLabMain = computed(() => fun.value?.experiments.filter(e => e.previewUrl).length ?? 0)
 const readyIdeas = computed(() => fun.value?.ideas.filter(i => i.status === 'ready' || i.status === 'next').length ?? 0)
 const byRepo = computed(() => {
-  const groups = new Map<string, FunOverview['experiments']>()
+  const groups = new Map<string, LabOverview['experiments']>()
   for (const e of fun.value?.experiments ?? []) groups.set(e.repo, [...(groups.get(e.repo) ?? []), e])
-  // Repos without anything in fun/main (paqt-ds-demo-healthcare) last.
-  const live = (list: FunOverview['experiments']) => (list.some(e => e.previewUrl) ? 0 : 1)
+  // Repos without anything in lab/main (paqt-ds-demo-healthcare) last.
+  const live = (list: LabOverview['experiments']) => (list.some(e => e.previewUrl) ? 0 : 1)
   return [...groups.entries()].sort((a, b) => live(a[1]) - live(b[1]) || a[0].localeCompare(b[0]))
 })
 const nowLabel = computed(() => {
@@ -99,7 +101,7 @@ const time = (iso: string) => new Date(iso).toLocaleString('en-GB', { weekday: '
         />
         <div class="min-w-0">
           <h1 class="text-base font-semibold leading-tight">
-            Fun loop
+            Lab loop
           </h1>
           <p class="text-xs text-foreground-muted">
             Session {{ fun?.session }} · {{ everyLabel }}<template v-if="fun?.pinnedAt">
@@ -139,7 +141,7 @@ const time = (iso: string) => new Date(iso).toLocaleString('en-GB', { weekday: '
         role="alert"
         class="text-danger-text"
       >
-        Could not read the fun loop: {{ fun?.error ?? error?.message }}
+        Could not read the lab loop: {{ fun?.error ?? error?.message }}
       </p>
 
       <p
@@ -165,7 +167,7 @@ const time = (iso: string) => new Date(iso).toLocaleString('en-GB', { weekday: '
                 <span class="text-xs font-semibold uppercase tracking-wide text-foreground-muted">Now</span>
                 <span
                   class="truncate text-xl font-semibold"
-                  data-testid="fun-now"
+                  data-testid="lab-now"
                 >{{ nowLabel }}</span>
                 <span class="text-xs text-foreground-muted">{{ nowHint }}</span>
               </div>
@@ -182,8 +184,8 @@ const time = (iso: string) => new Date(iso).toLocaleString('en-GB', { weekday: '
             </PDSCard>
             <PDSCard appearance="outlined">
               <div class="flex flex-col gap-1">
-                <span class="text-xs font-semibold uppercase tracking-wide text-foreground-muted">In fun/main</span>
-                <span class="text-3xl font-semibold leading-none tabular-nums">{{ inFunMain }}</span>
+                <span class="text-xs font-semibold uppercase tracking-wide text-foreground-muted">In lab/main</span>
+                <span class="text-3xl font-semibold leading-none tabular-nums">{{ inLabMain }}</span>
                 <span class="text-xs text-foreground-muted">{{ fun.experiments.length }} experiments in total</span>
               </div>
             </PDSCard>
@@ -196,7 +198,7 @@ const time = (iso: string) => new Date(iso).toLocaleString('en-GB', { weekday: '
             </PDSCard>
           </div>
           <p class="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm">
-            <span class="text-foreground-muted">Everything in fun/main:</span>
+            <span class="text-foreground-muted">Everything in lab/main:</span>
             <a
               v-for="p in fun.previews"
               :key="p.app"
@@ -235,13 +237,22 @@ const time = (iso: string) => new Date(iso).toLocaleString('en-GB', { weekday: '
                     <h3 class="font-semibold">
                       {{ e.name }}
                     </h3>
-                    <PDSBadge
-                      size="sm"
-                      appearance="subtle"
-                      :color="STATUS[e.status]?.color"
-                    >
-                      {{ STATUS[e.status]?.label ?? e.status }}
-                    </PDSBadge>
+                    <span class="flex shrink-0 gap-1">
+                      <PDSBadge
+                        v-if="e.kind && e.kind !== 'feature'"
+                        size="sm"
+                        appearance="subtle"
+                      >
+                        {{ KIND[e.kind] }}
+                      </PDSBadge>
+                      <PDSBadge
+                        size="sm"
+                        appearance="subtle"
+                        :color="STATUS[e.status]?.color"
+                      >
+                        {{ STATUS[e.status]?.label ?? e.status }}
+                      </PDSBadge>
+                    </span>
                   </div>
                   <p class="text-sm">
                     {{ e.description }}
@@ -285,6 +296,57 @@ const time = (iso: string) => new Date(iso).toLocaleString('en-GB', { weekday: '
         </section>
 
         <section
+          v-if="fun.proposals.length"
+          aria-labelledby="proposals-heading"
+          class="flex flex-col gap-3"
+        >
+          <h2
+            id="proposals-heading"
+            class="text-lg font-semibold"
+          >
+            Proposals
+          </h2>
+          <ul class="grid gap-3 md:grid-cols-2">
+            <li
+              v-for="p in fun.proposals"
+              :key="p.id"
+            >
+              <PDSCard
+                appearance="outlined"
+                class="h-full"
+              >
+                <div class="flex h-full flex-col gap-2">
+                  <div class="flex items-start justify-between gap-2">
+                    <h3 class="font-semibold">
+                      {{ p.title }}
+                    </h3>
+                    <PDSBadge
+                      size="sm"
+                      appearance="subtle"
+                      :color="p.status === 'accepted' ? 'success' : p.status === 'rejected' ? 'danger' : 'info'"
+                    >
+                      {{ p.status }}
+                    </PDSBadge>
+                  </div>
+                  <p
+                    v-if="p.recommendation"
+                    class="text-sm"
+                  >
+                    {{ p.recommendation }}
+                  </p>
+                  <a
+                    :href="p.url"
+                    target="_blank"
+                    rel="noopener"
+                    class="mt-auto text-sm underline"
+                  >Read the proposal</a>
+                </div>
+              </PDSCard>
+            </li>
+          </ul>
+        </section>
+
+        <section
           aria-labelledby="ideas-heading"
           class="flex flex-col gap-3"
         >
@@ -314,7 +376,7 @@ const time = (iso: string) => new Date(iso).toLocaleString('en-GB', { weekday: '
                 :title="`Value ${i.value} of 5`"
               >{{ '★'.repeat(i.value) }}</span>
               <span class="font-semibold">{{ i.title }}</span>
-              <span class="text-foreground-muted">{{ i.repo }}</span>
+              <span class="text-foreground-muted">{{ i.repo }}<template v-if="i.kind"> · {{ KIND[i.kind] }}</template></span>
               <PDSBadge
                 v-if="i.status !== 'ready'"
                 size="sm"

@@ -47,7 +47,8 @@ function send() {
           {{ KIND[item.kind]?.label ?? item.kind }}
         </PDSBadge>
         <span class="text-xs text-foreground-muted">
-          Session {{ task.session ?? '?' }} · {{ task.title }} · {{ relativeTime(item.created) }}
+          <span class="font-mono font-semibold text-foreground">I-{{ item.id }}</span>
+          · T-{{ task.id }} {{ task.title }} · session {{ task.session ?? '?' }} · {{ relativeTime(item.created) }}
         </span>
       </div>
       <h3 class="font-semibold">

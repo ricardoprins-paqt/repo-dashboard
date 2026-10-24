@@ -258,7 +258,8 @@ function renderHandoff(md: string) {
                 <div class="flex items-start justify-between gap-2">
                   <div class="min-w-0">
                     <p class="text-xs text-foreground-muted">
-                      Session {{ t.session ?? '?' }} · updated {{ relativeTime(t.updated) }}<template v-if="openCount(t)">
+                      <span class="font-mono font-semibold text-foreground">T-{{ t.id }}</span>
+                      · session {{ t.session ?? '?' }} · updated {{ relativeTime(t.updated) }}<template v-if="openCount(t)">
                         · {{ openCount(t) }} for you
                       </template>
                     </p>
@@ -334,7 +335,7 @@ function renderHandoff(md: string) {
               v-for="t in closedTasks"
               :key="t.id"
             >
-              Session {{ t.session }} · {{ t.title }} · {{ STATUS[t.status]?.label }}<template v-if="t.closed_note">
+              T-{{ t.id }} · session {{ t.session }} · {{ t.title }} · {{ STATUS[t.status]?.label }}<template v-if="t.closed_note">
                 ({{ t.closed_note }})
               </template>
             </li>

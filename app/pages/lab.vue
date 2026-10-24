@@ -3,7 +3,6 @@ import type { ExperimentStatus, IdeaKind, LabOverview } from '#shared/types/lab'
 
 useHead({ title: 'Lab loop · Repo Dashboard' })
 
-const { theme, toggle: toggleTheme } = useTheme()
 const { data, error, refresh } = await useFetch<LabOverview>('/api/lab')
 
 // The loop changes on its own (ticks, workers): keep the page current while it is open.
@@ -80,63 +79,17 @@ const time = (iso: string) => new Date(iso).toLocaleString('en-GB', { weekday: '
       href="#main-content"
     >Skip to content</a>
 
-    <DataSyncBanner />
-
-    <header class="border-b border-border bg-surface">
-      <div class="mx-auto flex w-full max-w-[84rem] flex-wrap items-center gap-x-6 gap-y-3 px-4 py-4 sm:px-8">
-        <NuxtLink
-          to="/"
-          class="flex shrink-0"
-          aria-label="PAQT repo dashboard home"
-        >
-          <img
-            class="dark:invert"
-            src="/logo.svg"
-            width="110"
-            height="24"
-            alt="PAQT"
-          >
-        </NuxtLink>
-        <span
-          class="hidden h-6 border-l border-border sm:block"
-          aria-hidden="true"
-        />
-        <div class="min-w-0">
-          <h1 class="text-base font-semibold leading-tight">
-            Lab loop
-          </h1>
-          <p class="text-xs text-foreground-muted">
-            Session {{ fun?.session }} · {{ everyLabel }}<template v-if="fun?.pinnedAt">
-              · develop pinned {{ fun.pinnedAt }}
-            </template>
-          </p>
-        </div>
-        <nav
-          class="ml-auto flex flex-wrap items-center gap-3"
-          aria-label="Pages"
-        >
-          <NuxtLink
-            to="/inbox"
-            class="text-sm font-semibold underline"
-          >Inbox</NuxtLink>
-          <NuxtLink
-            to="/"
-            class="text-sm underline"
-          >Repositories</NuxtLink>
-          <PDSButton
-            appearance="outlined"
-            square
-            @click="toggleTheme"
-          >
-            <PDSIcon
-              :name="theme === 'dark' ? 'lucide:sun' : 'lucide:moon'"
-              size="16"
-            />
-            <span class="sr-only">{{ theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode' }}</span>
-          </PDSButton>
-        </nav>
-      </div>
-    </header>
+    <AppHeader
+      title="Lab loop"
+      :items="[{ id: 'refresh', label: 'Refresh', icon: 'lucide:refresh-cw' }]"
+      @select="() => refresh()"
+    >
+      <template #subtitle>
+        Session {{ fun?.session }} · {{ everyLabel }}<template v-if="fun?.pinnedAt">
+          · develop pinned {{ fun.pinnedAt }}
+        </template>
+      </template>
+    </AppHeader>
 
     <main
       id="main-content"

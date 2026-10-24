@@ -3,7 +3,6 @@ import type { InboxItem, InboxOverview, InboxTask, TaskStatus } from '#shared/ty
 
 useHead({ title: 'Inbox · Repo Dashboard' })
 
-const { theme, toggle: toggleTheme } = useTheme()
 const { data, error, refresh } = await useFetch<InboxOverview>('/api/inbox')
 
 let timer: ReturnType<typeof setInterval> | undefined
@@ -90,66 +89,17 @@ function renderHandoff(md: string) {
       href="#main-content"
     >Skip to content</a>
 
-    <DataSyncBanner />
-
-    <header class="border-b border-border bg-surface">
-      <div class="mx-auto flex w-full max-w-[84rem] flex-wrap items-center gap-x-6 gap-y-3 px-4 py-4 sm:px-8">
-        <NuxtLink
-          to="/"
-          class="flex shrink-0"
-          aria-label="PAQT repo dashboard home"
-        >
-          <img
-            class="dark:invert"
-            src="/logo.svg"
-            width="110"
-            height="24"
-            alt="PAQT"
-          >
-        </NuxtLink>
-        <span
-          class="hidden h-6 border-l border-border sm:block"
-          aria-hidden="true"
-        />
-        <div class="min-w-0">
-          <h1 class="text-base font-semibold leading-tight">
-            Inbox
-          </h1>
-          <p
-            class="text-xs text-foreground-muted"
-            aria-live="polite"
-          >
-            {{ needsYou.length }} need you · {{ openTasks.length }} open tasks<template v-if="snoozed">
-              · {{ snoozed }} snoozed
-            </template>
-          </p>
-        </div>
-        <nav
-          class="ml-auto flex flex-wrap items-center gap-4"
-          aria-label="Pages"
-        >
-          <NuxtLink
-            to="/"
-            class="text-sm underline"
-          >Repositories</NuxtLink>
-          <NuxtLink
-            to="/lab"
-            class="text-sm underline"
-          >Lab loop</NuxtLink>
-          <PDSButton
-            appearance="outlined"
-            square
-            @click="toggleTheme"
-          >
-            <PDSIcon
-              :name="theme === 'dark' ? 'lucide:sun' : 'lucide:moon'"
-              size="16"
-            />
-            <span class="sr-only">{{ theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode' }}</span>
-          </PDSButton>
-        </nav>
-      </div>
-    </header>
+    <AppHeader
+      title="Inbox"
+      :items="[{ id: 'refresh', label: 'Refresh', icon: 'lucide:refresh-cw' }]"
+      @select="() => refresh()"
+    >
+      <template #subtitle>
+        {{ needsYou.length }} need you · {{ openTasks.length }} open tasks<template v-if="snoozed">
+          · {{ snoozed }} snoozed
+        </template>
+      </template>
+    </AppHeader>
 
     <main
       id="main-content"

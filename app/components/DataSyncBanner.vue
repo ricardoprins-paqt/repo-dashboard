@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { PDSExpCallout } from '@paqtdesign/experimental/vue'
 
-// A sticky warning while library-comparison's data sync needs a person: its data/jira.json or plans/ did not reach git.
+// A warning (in the sticky AppHeader) while library-comparison's data sync needs a person: its data/jira.json or plans/ did not reach git.
 interface SyncState { available: boolean, url: string, problem?: string | null, root?: string, unpushed?: number, pending?: number }
 
 const state = ref<SyncState | null>(null)
@@ -36,7 +36,7 @@ onBeforeUnmount(() => {
 <template>
   <div
     v-if="state?.available && state.problem"
-    class="sticky top-0 z-20 border-b border-border bg-surface px-4 py-2 sm:px-8"
+    class="border-b border-border bg-surface px-4 py-2 sm:px-8"
     data-testid="data-sync-banner"
   >
     <PDSExpCallout

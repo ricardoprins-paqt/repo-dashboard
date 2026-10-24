@@ -2,7 +2,6 @@
 import { PDSExpCallout } from '@paqtdesign/experimental/vue'
 import type { RepoStatus } from '#shared/types/repo'
 
-const { theme, toggle: toggleTheme } = useTheme()
 const { overview, loading, githubLoading, fetching, error, autoRefresh, load, fetchRemotes } = useRepoOverview()
 
 const filter = ref<RepoFilter>('all')
@@ -46,6 +45,18 @@ const updatedLabel = computed(() => {
   return error.value ? 'Not loaded' : 'Loading…'
 })
 
+// The header menu: actions and the auto-refresh setting (dark mode is added by AppHeader).
+const menuItems = computed(() => [
+  { id: 'refresh', label: 'Refresh', icon: 'lucide:refresh-cw', disabled: busy.value },
+  { id: 'fetch', label: 'Fetch from remotes', icon: 'lucide:cloud-download', disabled: busy.value },
+  { id: 'auto-refresh', label: 'Auto-refresh every minute', type: 'checkbox' as const, checked: autoRefresh.value },
+])
+function onMenu(id: string, checked: boolean) {
+  if (id === 'refresh') void load({ refresh: true })
+  else if (id === 'fetch') void fetchRemotes()
+  else if (id === 'auto-refresh') autoRefresh.value = checked
+}
+
 function setFilter(next: RepoFilter) {
   filter.value = filter.value === next ? 'all' : next
 }
@@ -58,103 +69,29 @@ function setFilter(next: RepoFilter) {
       href="#main-content"
     >Skip to content</a>
 
-    <DataSyncBanner />
-
-    <header class="border-b border-border bg-surface">
-      <div class="mx-auto flex w-full max-w-[84rem] flex-wrap items-center gap-x-6 gap-y-3 px-4 py-4 sm:px-8">
-        <NuxtLink
-          to="/"
-          class="flex shrink-0"
-          aria-label="PAQT repo dashboard home"
-        >
-          <img
-            class="dark:invert"
-            src="/logo.svg"
-            width="110"
-            height="24"
-            alt="PAQT"
-          >
-        </NuxtLink>
-        <span
-          class="hidden h-6 border-l border-border sm:block"
-          aria-hidden="true"
-        />
-        <div class="min-w-0">
-          <h1 class="text-base font-semibold leading-tight">
-            Repo dashboard
-          </h1>
-          <p
-            class="text-xs text-foreground-muted"
-            aria-live="polite"
-          >
-            {{ updatedLabel }}<template v-if="overview">
-              · {{ overview.repos.length }} repositories<template v-if="overview.viewer">
-                · {{ overview.viewer }}
-              </template>
+    <AppHeader
+      title="Repo dashboard"
+      :items="menuItems"
+      @select="onMenu"
+    >
+      <template #subtitle>
+        <template v-if="fetching">
+          Fetching from remotes…
+        </template>
+        <template v-else-if="loading">
+          Refreshing…
+        </template>
+        <template v-else>
+          {{ updatedLabel }}<template v-if="overview">
+            · {{ overview.repos.length }} repositories<template v-if="overview.viewer">
+              · {{ overview.viewer }}
             </template>
-          </p>
-        </div>
-        <div class="ml-auto flex flex-wrap items-center gap-3">
-          <NuxtLink
-            to="/inbox"
-            class="text-sm font-semibold underline"
-          >Inbox</NuxtLink>
-          <NuxtLink
-            to="/lab"
-            class="text-sm underline"
-          >Lab loop</NuxtLink>
-          <!-- PDSToggle renders a stray `size` attribute on the server, which breaks hydration. -->
-          <ClientOnly>
-            <PDSToggle
-              v-model="autoRefresh"
-              aria-label="Refresh automatically every minute"
-            >
-              Auto-refresh
-            </PDSToggle>
-          </ClientOnly>
-          <!-- PDSButton does not pass aria-* attributes on to its inner <button>, so the name is slot text. -->
-          <PDSButton
-            appearance="outlined"
-            square
-            @click="toggleTheme"
-          >
-            <PDSIcon
-              :name="theme === 'dark' ? 'lucide:sun' : 'lucide:moon'"
-              size="16"
-            />
-            <span class="sr-only">{{ theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode' }}</span>
-          </PDSButton>
-          <PDSButton
-            appearance="outlined"
-            :loading="loading || undefined"
-            :disabled="busy"
-            @click="load({ refresh: true })"
-          >
-            <template #start>
-              <PDSIcon
-                name="lucide:refresh-cw"
-                size="16"
-              />
-            </template>
-            Refresh
-          </PDSButton>
-          <PDSButton
-            color="brand"
-            :loading="fetching || undefined"
-            :disabled="busy"
-            @click="fetchRemotes"
-          >
-            <template #start>
-              <PDSIcon
-                name="lucide:cloud-download"
-                size="16"
-              />
-            </template>
-            Fetch from remotes
-          </PDSButton>
-        </div>
-      </div>
-    </header>
+          </template><template v-if="autoRefresh">
+            · auto-refresh on
+          </template>
+        </template>
+      </template>
+    </AppHeader>
 
     <main
       id="main-content"

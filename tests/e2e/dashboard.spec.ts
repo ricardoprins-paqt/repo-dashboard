@@ -103,30 +103,39 @@ test('opens the detail panel from anywhere on a card', async ({ page }) => {
   await expect(page.locator('pds-slideover')).toContainText('/work/widgets')
 })
 
-test('switches between light and dark mode and remembers the choice', async ({ page }) => {
+test('switches between light and dark mode from the header menu and remembers the choice', async ({ page }) => {
   const errors: string[] = []
   page.on('console', (message) => {
     if (message.type() === 'error') errors.push(message.text())
   })
   const html = page.locator('html')
+  const darkMode = page.getByRole('menuitemcheckbox', { name: 'Dark mode' })
+  const openMenu = () => page.getByRole('button', { name: 'Actions and settings' }).click()
 
   await page.goto('/')
   await expect(html).toHaveAttribute('data-theme', 'light')
 
-  await page.getByRole('button', { name: 'Switch to dark mode' }).click()
+  await openMenu()
+  await expect(darkMode).toHaveAttribute('aria-checked', 'false')
+  await darkMode.click()
   await expect(html).toHaveAttribute('data-theme', 'dark')
-  await expect(page.getByRole('button', { name: 'Switch to light mode' })).toBeVisible()
 
   // The head script applies the stored choice before the first paint, and hydration still agrees.
   await page.reload()
   await expect(html).toHaveAttribute('data-theme', 'dark')
-  await expect(page.getByRole('button', { name: 'Switch to light mode' })).toBeVisible()
-
-  await page.getByRole('button', { name: 'Switch to light mode' }).click()
+  await openMenu()
+  await expect(darkMode).toHaveAttribute('aria-checked', 'true')
+  await darkMode.click()
   await expect(html).toHaveAttribute('data-theme', 'light')
   await page.reload()
   await expect(html).toHaveAttribute('data-theme', 'light')
   expect(errors).toEqual([])
+})
+
+test('keeps the header in view while scrolling', async ({ page }) => {
+  await page.goto('/')
+  await page.mouse.wheel(0, 2000)
+  await expect(page.getByRole('banner')).toBeInViewport()
 })
 
 test.describe('with an OS that prefers dark', () => {

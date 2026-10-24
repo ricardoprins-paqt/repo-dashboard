@@ -310,7 +310,7 @@ const time = (iso: string) => new Date(iso).toLocaleString('en-GB', { weekday: '
               class="flex flex-wrap items-baseline gap-x-3 gap-y-1 px-4 py-2 text-sm"
             >
               <span
-                class="w-10 shrink-0 tabular-nums text-foreground-muted"
+                class="w-20 shrink-0 whitespace-nowrap text-warning-text"
                 :title="`Value ${i.value} of 5`"
               >{{ '★'.repeat(i.value) }}</span>
               <span class="font-semibold">{{ i.title }}</span>

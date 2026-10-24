@@ -61,6 +61,8 @@ export interface FunOverview {
   worker: { idea?: string, repo?: string, branch?: string, startedAt?: string } | null
   research: { startedAt?: string } | null
   lastTickAt: string | null
+  /** When `paqt-loop tick` last ran at all (every 5 minutes while the timer works). */
+  timerRanAt: string | null
   nextTickAt: string | null
   pinnedAt: string | null
   lastResearchAt: string | null

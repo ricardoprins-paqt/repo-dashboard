@@ -47,14 +47,14 @@ export function readFun(paths: FunPaths = defaultFunPaths()): FunOverview {
   const proxyPort = paths.proxyPort ?? 8080
   const previewBase = (app: string) => `http://s${session}-${app}.localhost:${proxyPort}`
   const empty: FunOverview = {
-    available: false, session, intervalMinutes: 60, paused: false, worker: null, research: null, lastTickAt: null, nextTickAt: null,
+    available: false, session, intervalMinutes: 60, paused: false, worker: null, research: null, lastTickAt: null, timerRanAt: null, nextTickAt: null,
     pinnedAt: null, lastResearchAt: null, experiments: [], ideas: [], ticks: [], runs: [], previews: [],
   }
   if (!loop) return { ...empty, error: `No loop.json in ${paths.loopDir}` }
 
   const intervalMinutes = Number(loop.intervalMinutes ?? 60)
   const state = readJson<{ worker?: FunOverview['worker'], research?: FunOverview['research'] }>(join(paths.loopDir, 'state.json'), {})
-  const clock = readJson<{ lastTickAt?: string }>(join(paths.stateDir, 'fun.json'), {})
+  const clock = readJson<{ lastTickAt?: string, lastRunAt?: string }>(join(paths.stateDir, 'fun.json'), {})
   const lastTickAt = clock.lastTickAt ?? null
   const nextTickAt = lastTickAt ? new Date(Date.parse(lastTickAt) + intervalMinutes * 60000).toISOString() : null
 
@@ -79,6 +79,7 @@ export function readFun(paths: FunPaths = defaultFunPaths()): FunOverview {
     worker: state.worker ?? null,
     research: state.research ?? null,
     lastTickAt,
+    timerRanAt: clock.lastRunAt ?? null,
     nextTickAt,
     pinnedAt: pinned,
     lastResearchAt,

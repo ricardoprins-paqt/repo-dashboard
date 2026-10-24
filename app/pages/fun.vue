@@ -61,6 +61,11 @@ const everyLabel = computed(() => {
   const m = fun.value?.intervalMinutes ?? 60
   return m % 60 === 0 ? `every ${m / 60 === 1 ? 'hour' : `${m / 60} hours`}` : `every ${m} minutes`
 })
+// The timer runs every 5 minutes; much longer without a run means it stopped (or paqt-loop broke).
+const timerStopped = computed(() => {
+  const at = fun.value?.timerRanAt
+  return Boolean(fun.value?.available) && (!at || Date.now() - Date.parse(at) > 15 * 60000)
+})
 const time = (iso: string) => new Date(iso).toLocaleString('en-GB', { weekday: 'short', hour: '2-digit', minute: '2-digit' })
 </script>
 
@@ -135,6 +140,15 @@ const time = (iso: string) => new Date(iso).toLocaleString('en-GB', { weekday: '
         class="text-danger-text"
       >
         Could not read the fun loop: {{ fun?.error ?? error?.message }}
+      </p>
+
+      <p
+        v-if="timerStopped"
+        role="alert"
+        class="text-danger-text"
+      >
+        The timer has not run {{ fun?.timerRanAt ? `since ${relativeTime(fun.timerRanAt)}` : 'yet' }}: no ticks are sent.
+        Check it with <code>systemctl --user status paqt-loop.service</code>.
       </p>
 
       <template v-if="fun?.available">

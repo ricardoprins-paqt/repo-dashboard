@@ -35,7 +35,7 @@ export interface LabIdea {
   why?: string
   value: number
   effort?: string
-  status: 'ready' | 'next' | 'doing' | 'done' | 'dropped'
+  status: 'ready' | 'next' | 'doing' | 'done' | 'parked' | 'dropped'
   source?: string
   addedAt?: string
 }

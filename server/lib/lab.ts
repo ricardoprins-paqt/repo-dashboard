@@ -61,7 +61,7 @@ function readProposals(dir: string): LabProposal[] {
 }
 
 const APPS = ['storybook', 'blocks', 'docs', 'token-forge']
-const IDEA_ORDER: Record<LabIdea['status'], number> = { next: 0, doing: 1, ready: 2, done: 3, dropped: 4 }
+const IDEA_ORDER: Record<LabIdea['status'], number> = { next: 0, doing: 1, ready: 2, parked: 3, done: 4, dropped: 5 }
 
 export function readLab(paths: LabPaths = defaultLabPaths()): LabOverview {
   const loop = readJson<{ session?: number, intervalMinutes?: number, paused?: boolean } | null>(join(paths.loopDir, 'loop.json'), null)
@@ -87,7 +87,7 @@ export function readLab(paths: LabPaths = defaultLabPaths()): LabOverview {
     }))
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
   const ideas = readJson<LabIdea[]>(join(paths.loopDir, 'ideas.json'), [])
-    .filter(i => i.status !== 'done')
+    .filter(i => i.status !== 'done' && i.status !== 'dropped')
     .sort((a, b) => IDEA_ORDER[a.status] - IDEA_ORDER[b.status] || b.value - a.value)
   const pinned = (readText(join(paths.loopDir, 'pins.conf')) ?? '').match(/^# pinned (\S+)/m)?.[1] ?? null
   const research = readJson<Array<{ checkedAt?: string }>>(join(paths.loopDir, 'research-log.json'), [])

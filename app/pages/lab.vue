@@ -33,6 +33,8 @@ const KIND: Record<IdeaKind, string> = { 'feature': 'Feature', 'ai-dx': 'AI / DX
 const fun = computed(() => data.value)
 const inLabMain = computed(() => fun.value?.experiments.filter(e => e.previewUrl).length ?? 0)
 const readyIdeas = computed(() => fun.value?.ideas.filter(i => i.status === 'ready' || i.status === 'next').length ?? 0)
+const backlog = computed(() => fun.value?.ideas.filter(i => i.status !== 'parked') ?? [])
+const parked = computed(() => fun.value?.ideas.filter(i => i.status === 'parked') ?? [])
 const byRepo = computed(() => {
   const groups = new Map<string, LabOverview['experiments']>()
   for (const e of fun.value?.experiments ?? []) groups.set(e.repo, [...(groups.get(e.repo) ?? []), e])
@@ -361,7 +363,7 @@ const time = (iso: string) => new Date(iso).toLocaleString('en-GB', { weekday: '
             Backlog
           </h2>
           <p
-            v-if="!fun.ideas.length"
+            v-if="!backlog.length"
             class="text-sm text-foreground-muted"
           >
             No ideas yet: the first research run fills the backlog.
@@ -371,7 +373,7 @@ const time = (iso: string) => new Date(iso).toLocaleString('en-GB', { weekday: '
             class="flex flex-col divide-y divide-border rounded border border-border"
           >
             <li
-              v-for="i in fun.ideas.slice(0, 15)"
+              v-for="i in backlog.slice(0, 20)"
               :key="i.id"
               class="flex flex-wrap items-baseline gap-x-3 gap-y-1 px-4 py-2 text-sm"
             >
@@ -392,6 +394,29 @@ const time = (iso: string) => new Date(iso).toLocaleString('en-GB', { weekday: '
               <span class="w-full text-foreground-muted">{{ i.description }}</span>
             </li>
           </ol>
+          <details
+            v-if="parked.length"
+            class="text-sm"
+          >
+            <summary class="cursor-pointer text-foreground-muted">
+              {{ parked.length }} parked (below 3 stars: never built; tell the PO "rate X higher" to bring one back)
+            </summary>
+            <ul class="mt-2 flex flex-col divide-y divide-border rounded border border-border">
+              <li
+                v-for="i in parked"
+                :key="i.id"
+                class="flex flex-wrap items-baseline gap-x-3 gap-y-1 px-4 py-2"
+              >
+                <span
+                  class="w-20 shrink-0 whitespace-nowrap text-warning-text"
+                  :title="`Value ${i.value} of 5`"
+                >{{ '★'.repeat(i.value) }}</span>
+                <span class="font-semibold">{{ i.title }}</span>
+                <span class="text-foreground-muted">{{ i.repo }}<template v-if="i.kind"> · {{ KIND[i.kind] }}</template> · {{ i.id }}</span>
+                <span class="w-full text-foreground-muted">{{ i.description }}</span>
+              </li>
+            </ul>
+          </details>
         </section>
 
         <div class="grid gap-8 lg:grid-cols-2">

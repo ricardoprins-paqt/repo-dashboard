@@ -51,6 +51,8 @@ describe('readLab', () => {
         { id: 'b', title: 'b', repo: 'r', description: '', value: 2, status: 'next' },
         { id: 'c', title: 'c', repo: 'r', description: '', value: 5, status: 'done' },
         { id: 'd', title: 'd', repo: 'r', description: '', value: 3, status: 'ready' },
+        { id: 'e', title: 'e', repo: 'r', description: '', value: 2, status: 'parked' },
+        { id: 'f', title: 'f', repo: 'r', description: '', value: 4, status: 'dropped' },
       ]),
     }))
     expect(fun.paused).toBe(true)
@@ -58,7 +60,7 @@ describe('readLab', () => {
     expect(fun.nextTickAt).toBe('2026-10-24T12:00:00.000Z')
     expect(fun.ticks.map(t => t.at)).toEqual(['b', 'a'])
     expect(fun.pinnedAt).toBe('2026-10-24')
-    expect(fun.ideas.map(i => i.id)).toEqual(['b', 'a', 'd'])
+    expect(fun.ideas.map(i => i.id)).toEqual(['b', 'a', 'd', 'e'])
   })
 
   it('reads a proposal\'s title, status and recommendation', () => {

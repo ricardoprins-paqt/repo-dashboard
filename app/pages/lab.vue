@@ -30,6 +30,32 @@ const STATUS: Record<ExperimentStatus, { label: string, color?: 'success' | 'war
 const KIND: Record<IdeaKind, string> = { 'feature': 'Feature', 'ai-dx': 'AI / DX', 'gap': 'Competitor gap', 'challenge': 'Proposal' }
 
 const fun = computed(() => data.value)
+
+// Header menu: a tick or research now. The timer's checks still apply; the page shows what happened.
+const running = ref<string | null>(null)
+const notice = ref<{ ok: boolean, text: string } | null>(null)
+const menuItems = computed(() => [
+  { id: 'tick', label: running.value === 'tick' ? 'Running a tick…' : 'Run a tick now', icon: 'lucide:play', disabled: Boolean(running.value) },
+  { id: 'research', label: running.value === 'research' ? 'Asking for research…' : 'Start research', icon: 'lucide:telescope', disabled: Boolean(running.value) || Boolean(fun.value?.research) },
+])
+async function onMenu(id: string) {
+  running.value = id
+  notice.value = null
+  try {
+    const r = await $fetch<{ ok: boolean, output: string }>('/api/inbox', { method: 'POST', body: { action: id === 'tick' ? 'loop-tick' : 'loop-research', loop: 'lab' }, headers: { 'X-LSS-Action': '1' } })
+    // paqt-loop prints "lab: sent" or "lab: skipped (reason)".
+    const out = r.output.replace(/^lab:\s*/, '')
+    const sent = out.startsWith('sent')
+    notice.value = { ok: sent, text: sent ? (id === 'tick' ? 'Tick sent to the product owner.' : 'Research requested; the product owner starts it now.') : `Not sent: ${out.replace(/^skipped\s*/, '').replace(/^\((.*)\)$/, '$1') || 'see the ticks below'}` }
+    await refresh()
+  }
+  catch (e) {
+    notice.value = { ok: false, text: (e as Error).message }
+  }
+  finally {
+    running.value = null
+  }
+}
 const inLabMain = computed(() => fun.value?.experiments.filter(e => e.previewUrl).length ?? 0)
 const readyIdeas = computed(() => fun.value?.ideas.filter(i => i.status === 'ready' || i.status === 'next').length ?? 0)
 const backlog = computed(() => fun.value?.ideas.filter(i => i.status !== 'parked') ?? [])
@@ -81,8 +107,8 @@ const time = (iso: string) => new Date(iso).toLocaleString('en-GB', { weekday: '
 
     <AppHeader
       title="Lab loop"
-      :items="[{ id: 'refresh', label: 'Refresh', icon: 'lucide:refresh-cw' }]"
-      @select="() => refresh()"
+      :items="menuItems"
+      @select="onMenu"
     >
       <template #subtitle>
         Session {{ fun?.session }} · {{ everyLabel }}<template v-if="fun?.pinnedAt">
@@ -95,6 +121,14 @@ const time = (iso: string) => new Date(iso).toLocaleString('en-GB', { weekday: '
       id="main-content"
       class="mx-auto flex w-full max-w-[84rem] flex-col gap-8 px-4 py-8 sm:px-8"
     >
+      <p
+        v-if="notice"
+        role="status"
+        class="text-sm"
+        :class="notice.ok ? 'text-success-text' : 'text-warning-text'"
+      >
+        {{ notice.text }}
+      </p>
       <p
         v-if="error || (fun && !fun.available)"
         role="alert"

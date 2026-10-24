@@ -18,6 +18,24 @@ onBeforeUnmount(() => {
   document.removeEventListener('visibilitychange', onVisible)
 })
 
+// Header menu: close items whose PRs/branches are gone now, instead of at the next 5-minute check.
+const checking = ref(false)
+const checked = ref<string | null>(null)
+async function checkNow() {
+  checking.value = true
+  try {
+    const r = await $fetch<{ ok: boolean, output: string }>('/api/inbox', { method: 'POST', body: { action: 'check' }, headers: { 'X-LSS-Action': '1' } })
+    checked.value = r.ok ? `Checked: ${r.output}.` : `The check failed: ${r.output}`
+    await refresh()
+  }
+  catch (e) {
+    checked.value = (e as Error).message
+  }
+  finally {
+    checking.value = false
+  }
+}
+
 const busy = ref(false)
 const actionError = ref<string | null>(null)
 async function act(body: Record<string, unknown>) {
@@ -91,8 +109,8 @@ function renderHandoff(md: string) {
 
     <AppHeader
       title="Inbox"
-      :items="[{ id: 'refresh', label: 'Refresh', icon: 'lucide:refresh-cw' }]"
-      @select="() => refresh()"
+      :items="[{ id: 'check', label: checking ? 'Checking…' : 'Check for closed PRs now', icon: 'lucide:git-pull-request-closed', disabled: checking }]"
+      @select="checkNow"
     >
       <template #subtitle>
         {{ needsYou.length }} need you · {{ openTasks.length }} open tasks<template v-if="snoozed">
@@ -105,6 +123,13 @@ function renderHandoff(md: string) {
       id="main-content"
       class="mx-auto flex w-full max-w-[84rem] flex-col gap-8 px-4 py-8 sm:px-8"
     >
+      <p
+        v-if="checked"
+        role="status"
+        class="text-sm text-foreground-muted"
+      >
+        {{ checked }}
+      </p>
       <p
         v-if="error || (data && !data.available) || actionError"
         role="alert"

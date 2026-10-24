@@ -96,6 +96,10 @@ function setFilter(next: RepoFilter) {
         </div>
         <div class="ml-auto flex flex-wrap items-center gap-3">
           <NuxtLink
+            to="/inbox"
+            class="text-sm font-semibold underline"
+          >Inbox</NuxtLink>
+          <NuxtLink
             to="/lab"
             class="text-sm underline"
           >Lab loop</NuxtLink>

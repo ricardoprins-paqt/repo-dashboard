@@ -114,6 +114,10 @@ const time = (iso: string) => new Date(iso).toLocaleString('en-GB', { weekday: '
           aria-label="Pages"
         >
           <NuxtLink
+            to="/inbox"
+            class="text-sm font-semibold underline"
+          >Inbox</NuxtLink>
+          <NuxtLink
             to="/"
             class="text-sm underline"
           >Repositories</NuxtLink>

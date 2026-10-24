@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { InboxOverview, InboxTask, TaskStatus } from '#shared/types/inbox'
+import type { InboxOverview, InboxTask, ItemKind, TaskStatus } from '#shared/types/inbox'
 
 useHead({ title: 'Inbox · Repo Dashboard' })
 
@@ -59,13 +59,44 @@ const tomorrow = () => {
   return d.toISOString().replace(/\.\d+Z$/, 'Z')
 }
 
-// Most urgent first: things only Ricardo can decide, then conflicts, reviews, FYIs; oldest first within a kind.
-const KIND_ORDER = { decision: 0, question: 0, conflict: 1, review: 2, fyi: 3 } as const
 const tasks = computed(() => data.value?.tasks ?? [])
-const needsYou = computed(() => tasks.value
-  .flatMap(task => task.items.map(item => ({ item, task })))
-  .filter(({ item }) => item.needs_you)
-  .sort((a, b) => KIND_ORDER[a.item.kind] - KIND_ORDER[b.item.kind] || a.item.created.localeCompare(b.item.created)))
+const allNeedsYou = computed(() => tasks.value.flatMap(task => task.items.map(item => ({ item, task }))).filter(({ item }) => item.needs_you))
+
+// Filters (which kinds) and sorting for "Needs you", remembered in this browser.
+const PREFS_KEY = 'repo-dashboard:inbox'
+const shownKinds = ref<Set<ItemKind>>(new Set(INBOX_KINDS.map(k => k.kind)))
+const sort = ref<InboxSort>('kind')
+const sortValue = computed<string>({
+  get: () => sort.value,
+  set: value => (sort.value = INBOX_SORTS.find(s => s.value === value)?.value ?? 'kind'),
+})
+onMounted(() => {
+  try {
+    const saved = JSON.parse(localStorage.getItem(PREFS_KEY) ?? '{}') as { kinds?: ItemKind[], sort?: InboxSort }
+    if (Array.isArray(saved.kinds)) shownKinds.value = new Set(saved.kinds.filter(k => INBOX_KINDS.some(x => x.kind === k)))
+    if (saved.sort && INBOX_SORTS.some(s => s.value === saved.sort)) sort.value = saved.sort
+  }
+  catch {
+    // Storage can be blocked; the defaults are fine.
+  }
+})
+watch([shownKinds, sort], () => {
+  try {
+    localStorage.setItem(PREFS_KEY, JSON.stringify({ kinds: [...shownKinds.value], sort: sort.value }))
+  }
+  catch {
+    // Not remembered this time.
+  }
+}, { deep: true })
+function toggleKind(kind: ItemKind) {
+  const next = new Set(shownKinds.value)
+  if (next.has(kind)) next.delete(kind)
+  else next.add(kind)
+  shownKinds.value = next
+}
+const kindCount = (kind: ItemKind) => allNeedsYou.value.filter(({ item }) => item.kind === kind).length
+const needsYou = computed(() => needsYouList(allNeedsYou.value, shownKinds.value, sort.value))
+const hiddenCount = computed(() => allNeedsYou.value.length - needsYou.value.length)
 const snoozed = computed(() => tasks.value.flatMap(t => t.items).filter(i => i.status === 'snoozed' && i.snooze_until && Date.parse(i.snooze_until) > Date.now()).length)
 
 const STATUS: Record<TaskStatus, { label: string, color?: 'success' | 'warning' | 'info' | 'danger' }> = {
@@ -107,7 +138,7 @@ function renderHandoff(md: string) {
       @select="checkNow"
     >
       <template #subtitle>
-        {{ needsYou.length }} need you · {{ openTasks.length }} open tasks<template v-if="snoozed">
+        {{ allNeedsYou.length }} need you · {{ openTasks.length }} open tasks<template v-if="snoozed">
           · {{ snoozed }} snoozed
         </template>
       </template>
@@ -171,20 +202,54 @@ function renderHandoff(md: string) {
         aria-labelledby="needs-heading"
         class="flex flex-col gap-3"
       >
-        <h2
-          id="needs-heading"
-          class="text-lg font-semibold"
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <h2
+            id="needs-heading"
+            class="text-lg font-semibold"
+          >
+            Needs you
+          </h2>
+          <div class="w-56">
+            <PDSSelect
+              v-model="sortValue"
+              :items="INBOX_SORTS"
+              aria-label="Sort the items that need you"
+            />
+          </div>
+        </div>
+        <div
+          class="flex flex-wrap gap-2"
+          role="group"
+          aria-label="Show these kinds"
         >
-          Needs you
-        </h2>
+          <PDSButton
+            v-for="k in INBOX_KINDS"
+            :key="k.kind"
+            size="sm"
+            :appearance="shownKinds.has(k.kind) ? undefined : 'outlined'"
+            :color="shownKinds.has(k.kind) ? 'brand' : undefined"
+            @click="toggleKind(k.kind)"
+          >
+            {{ k.label }} ({{ kindCount(k.kind) }})<span
+              v-if="!shownKinds.has(k.kind)"
+              class="sr-only"
+            > (hidden)</span>
+          </PDSButton>
+        </div>
         <p
           v-if="!needsYou.length"
           class="text-sm text-foreground-muted"
         >
-          Nothing needs you right now.
+          {{ allNeedsYou.length ? `Nothing to show: ${hiddenCount} hidden by the filters above.` : 'Nothing needs you right now.' }}
+        </p>
+        <p
+          v-if="needsYou.length && hiddenCount"
+          class="text-xs text-foreground-muted"
+        >
+          {{ hiddenCount }} hidden by the filters above.
         </p>
         <ul
-          v-else
+          v-if="needsYou.length"
           class="grid gap-3 lg:grid-cols-2"
         >
           <li

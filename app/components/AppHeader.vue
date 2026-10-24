@@ -23,7 +23,7 @@ const PAGES = [
 
 const menuItems = computed<DropdownMenuItem[]>(() => [
   ...props.items,
-  { id: 'theme-dark', label: 'Dark mode', type: 'checkbox', checked: theme.value === 'dark', icon: 'lucide:moon' },
+  { id: 'theme-dark', label: 'Dark mode', type: 'checkbox', checked: theme.value === 'dark' },
 ])
 
 function onSelect(event: CustomEvent<{ id: string, checked?: boolean }>) {

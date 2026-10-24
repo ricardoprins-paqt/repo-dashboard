@@ -27,6 +27,9 @@ export interface InboxItem {
   delivered_to: number | null
   snooze_until: string | null
   note: string | null
+  source: string
+  /** Decided by the status service (inbox.py NEEDS_YOU): Ricardo still has to act on it. */
+  needs_you: boolean
   created: string
   updated: string
 }
@@ -44,6 +47,10 @@ export interface InboxTask {
   links: Array<{ label: string, url: string }>
   handoff: string
   next: string
+  short: string
+  source: string
+  /** How many of its items need Ricardo (from the status service). */
+  needs_you: number
   created: string
   updated: string
   summarized_at: string | null
@@ -57,6 +64,12 @@ export interface InboxSession {
   status: 'idle' | 'busy' | 'not running' | string
   background: boolean
   conversation: string | null
+  /** All decided by the status service (inbox.py annotate_sessions), so the dashboard and the dispatcher agree. */
+  reserved: boolean
+  pinned: boolean
+  loop: boolean
+  free: boolean
+  task_id: number | null
 }
 
 export interface InboxOverview {

@@ -56,15 +56,16 @@ async function onMenu(id: string) {
     running.value = null
   }
 }
-const inLabMain = computed(() => fun.value?.experiments.filter(e => e.previewUrl).length ?? 0)
-const readyIdeas = computed(() => fun.value?.ideas.filter(i => i.status === 'ready' || i.status === 'next').length ?? 0)
+// By status (an experiment without a page, like an agent guide, has no preview link but is still in lab/main).
+const inLabMain = computed(() => fun.value?.experiments.filter(e => e.inLabMain).length ?? 0)
+const readyIdeas = computed(() => fun.value?.ideas.filter(i => (i.status === 'ready' || i.status === 'next') && i.value >= (fun.value?.minStarsToBuild ?? 3)).length ?? 0)
 const backlog = computed(() => fun.value?.ideas.filter(i => i.status !== 'parked') ?? [])
 const parked = computed(() => fun.value?.ideas.filter(i => i.status === 'parked') ?? [])
 const byRepo = computed(() => {
   const groups = new Map<string, LabOverview['experiments']>()
   for (const e of fun.value?.experiments ?? []) groups.set(e.repo, [...(groups.get(e.repo) ?? []), e])
   // Repos without anything in lab/main (paqt-ds-demo-healthcare) last.
-  const live = (list: LabOverview['experiments']) => (list.some(e => e.previewUrl) ? 0 : 1)
+  const live = (list: LabOverview['experiments']) => (list.some(e => e.inLabMain) ? 0 : 1)
   return [...groups.entries()].sort((a, b) => live(a[1]) - live(b[1]) || a[0].localeCompare(b[0]))
 })
 const nowLabel = computed(() => {
@@ -386,7 +387,7 @@ const time = (iso: string) => new Date(iso).toLocaleString('en-GB', { weekday: '
             class="text-sm"
           >
             <summary class="cursor-pointer text-foreground-muted">
-              {{ parked.length }} parked (below 3 stars: never built; tell the PO "rate X higher" to bring one back)
+              {{ parked.length }} parked (below {{ fun.minStarsToBuild }} stars: never built; tell the PO "rate X higher" to bring one back)
             </summary>
             <ul class="mt-2 flex flex-col divide-y divide-border rounded border border-border">
               <li

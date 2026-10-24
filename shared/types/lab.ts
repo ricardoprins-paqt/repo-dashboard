@@ -21,6 +21,8 @@ export interface LabExperiment {
   origin: string
   createdAt: string
   note?: string
+  /** Merged into lab/main (decided by the server from the status). */
+  inLabMain: boolean
   /** On the product owner's `lab/main` dev server; null when the experiment is not in `lab/main`. */
   previewUrl: string | null
 }
@@ -72,6 +74,8 @@ export interface LabOverview {
   /** Why the loop could not be read, when `available` is false. */
   error?: string
   session: number
+  /** loop.json minStarsToBuild: ideas below it are parked, never built. */
+  minStarsToBuild: number
   intervalMinutes: number
   paused: boolean
   worker: { idea?: string, repo?: string, branch?: string, startedAt?: string } | null

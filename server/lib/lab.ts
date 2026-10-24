@@ -1,7 +1,7 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
-import type { LabExperiment, LabIdea, LabOverview, LabProposal, LabRun, LabTick } from '#shared/types/lab'
+import type { ExperimentStatus, LabExperiment, LabIdea, LabOverview, LabProposal, LabRun, LabTick } from '#shared/types/lab'
 
 /**
  * Reads the lab loop: its files in pds-backlog (written by the product owner session) and the timer's own state in
@@ -60,16 +60,19 @@ function readProposals(dir: string): LabProposal[] {
   return readdirSync(dir).filter(f => f.endsWith('.md')).sort().map(f => parseProposal(f.slice(0, -3), readFileSync(join(dir, f), 'utf8')))
 }
 
+/** Experiment statuses that mean it is merged into lab/main (and so visible on the PO's dev servers). */
+const IN_LAB_MAIN: ExperimentStatus[] = ['in-lab-main', 'liked']
+
 const APPS = ['storybook', 'blocks', 'docs', 'token-forge']
 const IDEA_ORDER: Record<LabIdea['status'], number> = { next: 0, doing: 1, ready: 2, parked: 3, done: 4, dropped: 5 }
 
 export function readLab(paths: LabPaths = defaultLabPaths()): LabOverview {
-  const loop = readJson<{ session?: number, intervalMinutes?: number, paused?: boolean } | null>(join(paths.loopDir, 'loop.json'), null)
+  const loop = readJson<{ session?: number, intervalMinutes?: number, paused?: boolean, minStarsToBuild?: number } | null>(join(paths.loopDir, 'loop.json'), null)
   const session = Number(loop?.session ?? 0)
   const proxyPort = paths.proxyPort ?? 8080
   const previewBase = (app: string) => `http://s${session}-${app}.localhost:${proxyPort}`
   const empty: LabOverview = {
-    available: false, session, intervalMinutes: 60, paused: false, worker: null, research: null, lastTickAt: null, timerRanAt: null, nextTickAt: null,
+    available: false, session, minStarsToBuild: 3, intervalMinutes: 60, paused: false, worker: null, research: null, lastTickAt: null, timerRanAt: null, nextTickAt: null,
     pinnedAt: null, lastResearchAt: null, experiments: [], ideas: [], proposals: [], ticks: [], runs: [], previews: [],
   }
   if (!loop) return { ...empty, error: `No loop.json in ${paths.loopDir}` }
@@ -80,10 +83,11 @@ export function readLab(paths: LabPaths = defaultLabPaths()): LabOverview {
   const lastTickAt = clock.lastTickAt ?? null
   const nextTickAt = lastTickAt ? new Date(Date.parse(lastTickAt) + intervalMinutes * 60000).toISOString() : null
 
-  const experiments = readJson<Omit<LabExperiment, 'previewUrl'>[]>(join(paths.loopDir, 'experiments.json'), [])
+  const experiments = readJson<Omit<LabExperiment, 'previewUrl' | 'inLabMain'>[]>(join(paths.loopDir, 'experiments.json'), [])
     .map(e => ({
       ...e,
-      previewUrl: (e.status === 'in-lab-main' || e.status === 'liked') && e.app && e.previewPath ? `${previewBase(e.app)}${e.previewPath}` : null,
+      inLabMain: IN_LAB_MAIN.includes(e.status),
+      previewUrl: IN_LAB_MAIN.includes(e.status) && e.app && e.previewPath ? `${previewBase(e.app)}${e.previewPath}` : null,
     }))
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
   const ideas = readJson<LabIdea[]>(join(paths.loopDir, 'ideas.json'), [])
@@ -96,6 +100,7 @@ export function readLab(paths: LabPaths = defaultLabPaths()): LabOverview {
   return {
     available: true,
     session,
+    minStarsToBuild: Number(loop.minStarsToBuild ?? 3),
     intervalMinutes,
     paused: Boolean(loop.paused),
     worker: state.worker ?? null,

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { InboxItem, InboxOverview, InboxTask, TaskStatus } from '#shared/types/inbox'
+import type { InboxOverview, InboxTask, TaskStatus } from '#shared/types/inbox'
 
 useHead({ title: 'Inbox · Repo Dashboard' })
 
@@ -64,8 +64,7 @@ const KIND_ORDER = { decision: 0, question: 0, conflict: 1, review: 2, fyi: 3 } 
 const tasks = computed(() => data.value?.tasks ?? [])
 const needsYou = computed(() => tasks.value
   .flatMap(task => task.items.map(item => ({ item, task })))
-  .filter(({ item }) => item.status === 'open' || item.status === 'answered'
-    || (item.status === 'snoozed' && (!item.snooze_until || Date.parse(item.snooze_until) <= Date.now())))
+  .filter(({ item }) => item.needs_you)
   .sort((a, b) => KIND_ORDER[a.item.kind] - KIND_ORDER[b.item.kind] || a.item.created.localeCompare(b.item.created)))
 const snoozed = computed(() => tasks.value.flatMap(t => t.items).filter(i => i.status === 'snoozed' && i.snooze_until && Date.parse(i.snooze_until) > Date.now()).length)
 
@@ -78,16 +77,11 @@ const STATUS: Record<TaskStatus, { label: string, color?: 'success' | 'warning' 
 }
 const openTasks = computed(() => tasks.value.filter(t => t.status !== 'done' && t.status !== 'dropped'))
 const closedTasks = computed(() => tasks.value.filter(t => t.status === 'done' || t.status === 'dropped'))
-const openCount = (t: InboxTask) => t.items.filter((i: InboxItem) => i.status === 'open' || i.status === 'answered').length
+const openCount = (t: InboxTask) => t.needs_you
 
 // Session strip: what each session is on now.
-const sessions = computed(() => (data.value?.sessions ?? []).map((s) => {
-  const task = tasks.value.find(t => t.conversation && t.conversation === s.conversation)
-  const reserved = data.value?.reserved.includes(s.n) ?? false
-  const pinned = data.value?.pins.includes(s.n) ?? false
-  const free = !reserved && !pinned && s.status === 'idle' && (!task || task.status === 'done' || task.status === 'dropped')
-  return { ...s, task, reserved, pinned, free }
-}))
+// Session strip: what each session is on now. Reserved, pinned, loop and free come from the status service.
+const sessions = computed(() => (data.value?.sessions ?? []).map(s => ({ ...s, task: tasks.value.find(t => t.id === s.task_id) })))
 
 // The handoff is short markdown: escape it, then allow **bold**, bullets and links.
 function renderHandoff(md: string) {
@@ -156,7 +150,7 @@ function renderHandoff(md: string) {
               <span
                 class="text-xs"
                 :class="s.status === 'busy' ? 'text-info-text' : s.free ? 'text-success-text' : 'text-foreground-muted'"
-              >{{ s.status === 'busy' ? 'busy' : s.reserved ? 'reserved' : s.pinned ? 'yours' : s.free ? 'free' : s.status }}</span>
+              >{{ s.status === 'busy' ? 'busy' : s.reserved ? 'reserved' : s.loop ? 'loop' : s.pinned ? 'yours' : s.free ? 'free' : s.status }}</span>
             </div>
             <span class="line-clamp-2 text-xs text-foreground-muted">{{ s.task?.title ?? s.name ?? 'No task' }}</span>
             <button

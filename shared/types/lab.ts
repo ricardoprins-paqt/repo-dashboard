@@ -37,7 +37,12 @@ export interface LabIdea {
   why?: string
   value: number
   effort?: string
-  status: 'ready' | 'next' | 'doing' | 'done' | 'parked' | 'dropped'
+  status: 'ready' | 'next' | 'doing' | 'done' | 'parked' | 'rejected' | 'dropped'
+  /** Ricardo's own rating (from the dashboard, applied by the PO); counts instead of `value` when set. */
+  ricardoValue?: number
+  notes?: Array<{ at: string, text: string }>
+  dependsOn?: string[]
+  note?: string
   source?: string
   addedAt?: string
 }
@@ -93,4 +98,19 @@ export interface LabOverview {
   runs: LabRun[]
   /** The `lab/main` dev servers, one per app. */
   previews: Array<{ app: string, url: string }>
+}
+
+/** Ricardo's feedback on an idea (status service /api/inbox/feedback), until and shortly after the PO applied it. */
+export interface LabFeedback {
+  id: number
+  loop: string
+  target_type: 'idea'
+  target_id: string
+  kind: 'rating' | 'not-now' | 'reject' | 'note'
+  value: number | null
+  text: string
+  status: 'pending' | 'delivered' | 'applied'
+  created: string
+  updated: string
+  applied_note: string | null
 }

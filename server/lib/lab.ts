@@ -64,7 +64,9 @@ function readProposals(dir: string): LabProposal[] {
 const IN_LAB_MAIN: ExperimentStatus[] = ['in-lab-main', 'liked']
 
 const APPS = ['storybook', 'blocks', 'docs', 'token-forge']
-const IDEA_ORDER: Record<LabIdea['status'], number> = { next: 0, doing: 1, ready: 2, parked: 3, done: 4, dropped: 5 }
+const IDEA_ORDER: Record<LabIdea['status'], number> = { next: 0, doing: 1, ready: 2, parked: 3, done: 4, rejected: 5, dropped: 6 }
+/** Ricardo's rating counts over research's when he gave one. */
+export const ideaValue = (i: Pick<LabIdea, 'value' | 'ricardoValue'>) => i.ricardoValue ?? i.value
 
 export function readLab(paths: LabPaths = defaultLabPaths()): LabOverview {
   const loop = readJson<{ session?: number, intervalMinutes?: number, paused?: boolean, minStarsToBuild?: number } | null>(join(paths.loopDir, 'loop.json'), null)
@@ -91,8 +93,8 @@ export function readLab(paths: LabPaths = defaultLabPaths()): LabOverview {
     }))
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
   const ideas = readJson<LabIdea[]>(join(paths.loopDir, 'ideas.json'), [])
-    .filter(i => i.status !== 'done' && i.status !== 'dropped')
-    .sort((a, b) => IDEA_ORDER[a.status] - IDEA_ORDER[b.status] || b.value - a.value)
+    .filter(i => i.status !== 'done' && i.status !== 'dropped' && i.status !== 'rejected')
+    .sort((a, b) => IDEA_ORDER[a.status] - IDEA_ORDER[b.status] || ideaValue(b) - ideaValue(a))
   const pinned = (readText(join(paths.loopDir, 'pins.conf')) ?? '').match(/^# pinned (\S+)/m)?.[1] ?? null
   const research = readJson<Array<{ checkedAt?: string }>>(join(paths.loopDir, 'research-log.json'), [])
   const lastResearchAt = research.map(r => r.checkedAt ?? '').sort().at(-1) || null

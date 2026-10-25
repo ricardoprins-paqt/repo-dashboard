@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import type { ExperimentStatus, IdeaKind, LabOverview } from '#shared/types/lab'
+import type { ExperimentStatus, IdeaKind, LabFeedback, LabOverview } from '#shared/types/lab'
 
 useHead({ title: 'Lab loop · Repo Dashboard' })
 
 const { data, error, refresh } = await useFetch<LabOverview>('/api/lab')
+// Ricardo's feedback on ideas, until the PO applied it (from the status service).
+const { data: feedback, refresh: refreshFeedback } = await useFetch<LabFeedback[]>('/api/lab-feedback')
 
 // The loop changes on its own (ticks, workers): keep the page current while it is open.
 let timer: ReturnType<typeof setInterval> | undefined
@@ -11,7 +13,10 @@ function onVisible() {
   if (!document.hidden) void refresh()
 }
 onMounted(() => {
-  timer = setInterval(refresh, 30000)
+  timer = setInterval(() => {
+    void refresh()
+    void refreshFeedback()
+  }, 30000)
   document.addEventListener('visibilitychange', onVisible)
 })
 onBeforeUnmount(() => {
@@ -58,7 +63,7 @@ async function onMenu(id: string) {
 }
 // By status (an experiment without a page, like an agent guide, has no preview link but is still in lab/main).
 const inLabMain = computed(() => fun.value?.experiments.filter(e => e.inLabMain).length ?? 0)
-const readyIdeas = computed(() => fun.value?.ideas.filter(i => (i.status === 'ready' || i.status === 'next') && i.value >= (fun.value?.minStarsToBuild ?? 3)).length ?? 0)
+const readyIdeas = computed(() => fun.value?.ideas.filter(i => (i.status === 'ready' || i.status === 'next') && (i.ricardoValue ?? i.value) >= (fun.value?.minStarsToBuild ?? 3)).length ?? 0)
 const backlog = computed(() => fun.value?.ideas.filter(i => i.status !== 'parked') ?? [])
 const parked = computed(() => fun.value?.ideas.filter(i => i.status === 'parked') ?? [])
 const byRepo = computed(() => {
@@ -360,49 +365,31 @@ const time = (iso: string) => new Date(iso).toLocaleString('en-GB', { weekday: '
             v-else
             class="flex flex-col divide-y divide-border rounded border border-border bg-surface"
           >
-            <li
-              v-for="i in backlog.slice(0, 20)"
+            <IdeaRow
+              v-for="i in backlog.slice(0, 30)"
               :key="i.id"
-              class="flex flex-wrap items-baseline gap-x-3 gap-y-1.5 px-5 py-3.5 text-sm"
-            >
-              <span
-                class="w-20 shrink-0 whitespace-nowrap text-warning-text"
-                :title="`Value ${i.value} of 5`"
-              >{{ '★'.repeat(i.value) }}</span>
-              <span class="font-semibold">{{ i.title }}</span>
-              <span class="text-foreground-muted">{{ i.repo }}<template v-if="i.kind"> · {{ KIND[i.kind] }}</template></span>
-              <PDSBadge
-                v-if="i.status !== 'ready'"
-                size="sm"
-                appearance="subtle"
-                :color="i.status === 'next' ? 'info' : i.status === 'doing' ? 'success' : undefined"
-              >
-                {{ i.status }}
-              </PDSBadge>
-              <span class="w-full text-foreground-muted">{{ i.description }}</span>
-            </li>
+              :idea="i"
+              :feedback="feedback ?? []"
+              :kind-label="i.kind ? KIND[i.kind] : undefined"
+              @changed="refreshFeedback()"
+            />
           </ol>
           <details
             v-if="parked.length"
             class="text-sm"
           >
             <summary class="cursor-pointer text-foreground-muted">
-              {{ parked.length }} parked (below {{ fun.minStarsToBuild }} stars: never built; tell the PO "rate X higher" to bring one back)
+              {{ parked.length }} parked (below {{ fun.minStarsToBuild }} stars, or "not now": never built; rate one up to bring it back)
             </summary>
             <ul class="mt-2 flex flex-col divide-y divide-border rounded border border-border bg-surface">
-              <li
+              <IdeaRow
                 v-for="i in parked"
                 :key="i.id"
-                class="flex flex-wrap items-baseline gap-x-3 gap-y-1.5 px-5 py-3.5"
-              >
-                <span
-                  class="w-20 shrink-0 whitespace-nowrap text-warning-text"
-                  :title="`Value ${i.value} of 5`"
-                >{{ '★'.repeat(i.value) }}</span>
-                <span class="font-semibold">{{ i.title }}</span>
-                <span class="text-foreground-muted">{{ i.repo }}<template v-if="i.kind"> · {{ KIND[i.kind] }}</template> · {{ i.id }}</span>
-                <span class="w-full text-foreground-muted">{{ i.description }}</span>
-              </li>
+                :idea="i"
+                :feedback="feedback ?? []"
+                :kind-label="i.kind ? KIND[i.kind] : undefined"
+                @changed="refreshFeedback()"
+              />
             </ul>
           </details>
         </section>

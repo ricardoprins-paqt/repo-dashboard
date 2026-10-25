@@ -41,7 +41,7 @@ describe('readLab', () => {
 
   it('reads the timer state, the worker, the pin and the backlog in order', () => {
     const fun = readLab(setup({
-      'loop.json': JSON.stringify({ session: 2, intervalMinutes: 120, paused: true }),
+      'loop.json': JSON.stringify({ session: 2, intervalMinutes: 120 }),
       'state.json': JSON.stringify({ worker: { branch: 'lab/x', startedAt: '2026-10-24T10:00:00Z' }, research: null }),
       'state/lab.json': JSON.stringify({ lastTickAt: '2026-10-24T10:00:00.000Z' }),
       'state/lab.jsonl': `${JSON.stringify({ at: 'a', result: 'skipped', reason: 'paused' })}\nnot json\n${JSON.stringify({ at: 'b', result: 'sent' })}\n`,
@@ -55,9 +55,7 @@ describe('readLab', () => {
         { id: 'f', title: 'f', repo: 'r', description: '', value: 4, status: 'dropped' },
       ]),
     }))
-    expect(fun.paused).toBe(true)
     expect(fun.worker?.branch).toBe('lab/x')
-    expect(fun.nextTickAt).toBe('2026-10-24T12:00:00.000Z')
     expect(fun.ticks.map(t => t.at)).toEqual(['b', 'a'])
     expect(fun.pinnedAt).toBe('2026-10-24')
     expect(fun.ideas.map(i => i.id)).toEqual(['b', 'a', 'd', 'e'])

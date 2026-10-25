@@ -82,13 +82,8 @@ export interface LabOverview {
   /** loop.json minStarsToBuild: ideas below it are parked, never built. */
   minStarsToBuild: number
   intervalMinutes: number
-  paused: boolean
   worker: { idea?: string, repo?: string, branch?: string, startedAt?: string } | null
   research: { startedAt?: string } | null
-  lastTickAt: string | null
-  /** When `paqt-loop tick` last ran at all (every 5 minutes while the timer works). */
-  timerRanAt: string | null
-  nextTickAt: string | null
   pinnedAt: string | null
   lastResearchAt: string | null
   experiments: LabExperiment[]
@@ -113,4 +108,20 @@ export interface LabFeedback {
   created: string
   updated: string
   applied_note: string | null
+}
+
+/** The loop's state, decided by the status service (lss-tools inbox.loop_view, the loop state machine). */
+export interface LabLoopView {
+  name: string
+  status: 'running' | 'paused'
+  reason: 'ricardo' | 'pr-limit' | null
+  since: string
+  display: 'broken' | 'paused' | 'held' | 'working' | 'waiting'
+  detail: string
+  /** What Ricardo can do now: "pause" or "resume". */
+  events: string[]
+  lastTickAt: string | null
+  timerRanAt: string | null
+  nextTickAt: string | null
+  history: Array<{ at: string, event: string, from_state: string, to_state: string, actor: string | null, note: string | null }>
 }

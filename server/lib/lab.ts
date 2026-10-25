@@ -69,21 +69,18 @@ const IDEA_ORDER: Record<LabIdea['status'], number> = { next: 0, doing: 1, ready
 export const ideaValue = (i: Pick<LabIdea, 'value' | 'ricardoValue'>) => i.ricardoValue ?? i.value
 
 export function readLab(paths: LabPaths = defaultLabPaths()): LabOverview {
-  const loop = readJson<{ session?: number, intervalMinutes?: number, paused?: boolean, minStarsToBuild?: number } | null>(join(paths.loopDir, 'loop.json'), null)
+  const loop = readJson<{ session?: number, intervalMinutes?: number, minStarsToBuild?: number } | null>(join(paths.loopDir, 'loop.json'), null)
   const session = Number(loop?.session ?? 0)
   const proxyPort = paths.proxyPort ?? 8080
   const previewBase = (app: string) => `http://s${session}-${app}.localhost:${proxyPort}`
   const empty: LabOverview = {
-    available: false, session, minStarsToBuild: 3, intervalMinutes: 60, paused: false, worker: null, research: null, lastTickAt: null, timerRanAt: null, nextTickAt: null,
+    available: false, session, minStarsToBuild: 3, intervalMinutes: 60, worker: null, research: null,
     pinnedAt: null, lastResearchAt: null, experiments: [], ideas: [], proposals: [], ticks: [], runs: [], previews: [],
   }
   if (!loop) return { ...empty, error: `No loop.json in ${paths.loopDir}` }
 
   const intervalMinutes = Number(loop.intervalMinutes ?? 60)
   const state = readJson<{ worker?: LabOverview['worker'], research?: LabOverview['research'] }>(join(paths.loopDir, 'state.json'), {})
-  const clock = readJson<{ lastTickAt?: string, lastRunAt?: string }>(join(paths.stateDir, 'lab.json'), {})
-  const lastTickAt = clock.lastTickAt ?? null
-  const nextTickAt = lastTickAt ? new Date(Date.parse(lastTickAt) + intervalMinutes * 60000).toISOString() : null
 
   const experiments = readJson<Omit<LabExperiment, 'previewUrl' | 'inLabMain'>[]>(join(paths.loopDir, 'experiments.json'), [])
     .map(e => ({
@@ -104,12 +101,8 @@ export function readLab(paths: LabPaths = defaultLabPaths()): LabOverview {
     session,
     minStarsToBuild: Number(loop.minStarsToBuild ?? 3),
     intervalMinutes,
-    paused: Boolean(loop.paused),
     worker: state.worker ?? null,
     research: state.research ?? null,
-    lastTickAt,
-    timerRanAt: clock.lastRunAt ?? null,
-    nextTickAt,
     pinnedAt: pinned,
     lastResearchAt,
     experiments,

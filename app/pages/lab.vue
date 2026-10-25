@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { ExperimentStatus, IdeaKind, LabFeedback, LabOverview } from '#shared/types/lab'
+import type { ExperimentStatus, IdeaKind, LabFeedback, LabLoopView, LabOverview } from '#shared/types/lab'
 
 useHead({ title: 'Lab loop · Repo Dashboard' })
 
@@ -16,6 +16,7 @@ onMounted(() => {
   timer = setInterval(() => {
     void refresh()
     void refreshFeedback()
+    void refreshLoop()
   }, 30000)
   document.addEventListener('visibilitychange', onVisible)
 })
@@ -86,20 +87,28 @@ const nowHint = computed(() => {
   if (f.research?.startedAt) parts.push(`research running since ${relativeTime(f.research.startedAt)}`)
   return parts.join(' · ') || 'no worker running'
 })
-const nextLabel = computed(() => {
-  const f = fun.value
-  if (!f) return '–'
-  if (f.paused) return 'Paused'
-  return f.nextTickAt ? relativeTime(f.nextTickAt) : 'soon'
-})
+// The loop's state comes from the status service (the loop state machine); the page only shows it and sends pause/resume.
+const { data: loop, refresh: refreshLoop } = await useFetch<LabLoopView | null>('/api/lab-loop')
+const LOOP_LABEL: Record<LabLoopView['display'], string> = { broken: 'Timer stopped', paused: 'Paused', held: 'Held', working: 'Working', waiting: 'Running' }
+const loopBusy = ref(false)
+const loopError = ref<string | null>(null)
+async function loopEvent(event: 'pause' | 'resume') {
+  loopBusy.value = true
+  loopError.value = null
+  try {
+    await $fetch('/api/lab-loop', { method: 'POST', body: { event }, headers: { 'X-LSS-Action': '1' } })
+    await refreshLoop()
+  }
+  catch (e) {
+    loopError.value = (e as { statusMessage?: string }).statusMessage ?? (e as Error).message
+  }
+  finally {
+    loopBusy.value = false
+  }
+}
 const everyLabel = computed(() => {
   const m = fun.value?.intervalMinutes ?? 60
   return m % 60 === 0 ? `every ${m / 60 === 1 ? 'hour' : `${m / 60} hours`}` : `every ${m} minutes`
-})
-// The timer runs every 5 minutes; much longer without a run means it stopped (or paqt-loop broke).
-const timerStopped = computed(() => {
-  const at = fun.value?.timerRanAt
-  return Boolean(fun.value?.available) && (!at || Date.now() - Date.parse(at) > 15 * 60000)
 })
 const time = (iso: string) => new Date(iso).toLocaleString('en-GB', { weekday: 'short', hour: '2-digit', minute: '2-digit' })
 </script>
@@ -144,12 +153,11 @@ const time = (iso: string) => new Date(iso).toLocaleString('en-GB', { weekday: '
       </p>
 
       <p
-        v-if="timerStopped"
+        v-if="loop?.display === 'broken'"
         role="alert"
         class="text-danger-text"
       >
-        The timer has not run {{ fun?.timerRanAt ? `since ${relativeTime(fun.timerRanAt)}` : 'yet' }}: no ticks are sent.
-        Check it with <code>systemctl --user status paqt-loop.service</code>.
+        The timer stopped ({{ loop.detail }}): no ticks are sent. Check it with <code>systemctl --user status paqt-loop.service</code>.
       </p>
 
       <template v-if="fun?.available">
@@ -171,14 +179,65 @@ const time = (iso: string) => new Date(iso).toLocaleString('en-GB', { weekday: '
                 <span class="text-xs text-foreground-muted">{{ nowHint }}</span>
               </div>
             </PDSCard>
-            <PDSCard appearance="outlined">
+            <PDSCard
+              appearance="outlined"
+              data-testid="lab-loop"
+            >
               <div class="flex flex-col gap-1">
-                <span class="text-xs font-semibold uppercase tracking-wide text-foreground-muted">Next tick</span>
+                <span class="text-xs font-semibold uppercase tracking-wide text-foreground-muted">Loop</span>
                 <span
                   class="text-xl font-semibold"
-                  :class="{ 'text-warning-text': fun.paused }"
-                >{{ nextLabel }}</span>
-                <span class="text-xs text-foreground-muted">last {{ relativeTime(fun.lastTickAt) }}</span>
+                  :class="loop?.display === 'paused' || loop?.display === 'held' ? 'text-warning-text' : loop?.display === 'broken' ? 'text-danger-text' : ''"
+                >{{ loop ? LOOP_LABEL[loop.display] : 'Unknown' }}</span>
+                <span class="text-xs text-foreground-muted">
+                  {{ loop?.detail ?? 'the status service does not answer' }}<template v-if="loop && loop.status === 'running' && loop.nextTickAt">
+                    · next tick <RelativeTime :at="loop.nextTickAt" />
+                  </template><template v-if="loop && loop.status === 'paused'">
+                    · since <RelativeTime :at="loop.since" />
+                  </template>
+                </span>
+                <span
+                  v-if="loop?.events.length"
+                  class="pt-1"
+                >
+                  <PDSButton
+                    v-if="loop.events.includes('pause')"
+                    size="sm"
+                    appearance="outlined"
+                    :disabled="loopBusy"
+                    @click="loopEvent('pause')"
+                  >Pause</PDSButton>
+                  <PDSButton
+                    v-if="loop.events.includes('resume')"
+                    size="sm"
+                    color="brand"
+                    :disabled="loopBusy"
+                    @click="loopEvent('resume')"
+                  >Continue</PDSButton>
+                </span>
+                <span
+                  v-if="loopError"
+                  role="alert"
+                  class="text-xs text-danger-text"
+                >{{ loopError }}</span>
+                <details
+                  v-if="loop?.history.length"
+                  class="text-xs text-foreground-muted"
+                >
+                  <summary class="cursor-pointer">
+                    History
+                  </summary>
+                  <ul class="mt-1 flex flex-col gap-0.5">
+                    <li
+                      v-for="h in loop.history.slice(0, 8)"
+                      :key="h.at + h.event"
+                    >
+                      <RelativeTime :at="h.at" /> · {{ h.event }} by {{ h.actor ?? 'unknown' }}<template v-if="h.note">
+                        ({{ h.note }})
+                      </template>
+                    </li>
+                  </ul>
+                </details>
               </div>
             </PDSCard>
             <PDSCard appearance="outlined">

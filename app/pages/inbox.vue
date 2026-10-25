@@ -102,6 +102,7 @@ const STATUS: Record<TaskStatus, { label: string, color?: 'success' | 'warning' 
   working: { label: 'Working', color: 'info' },
   waiting: { label: 'Waiting for you', color: 'warning' },
   ready: { label: 'Ready to resume', color: 'info' },
+  parked: { label: 'Parked, waiting for you', color: 'warning' },
   done: { label: 'Done', color: 'success' },
   dropped: { label: 'Dropped' },
 }

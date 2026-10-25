@@ -1,6 +1,6 @@
 /** Ricardo's tasks and inbox items across the Claude sessions, from the status service (lss-tools, /api/inbox). */
 
-export type TaskStatus = 'working' | 'waiting' | 'ready' | 'done' | 'dropped'
+export type TaskStatus = 'working' | 'waiting' | 'ready' | 'parked' | 'done' | 'dropped'
 export type ItemKind = 'question' | 'decision' | 'review' | 'conflict' | 'fyi'
 export type ItemStatus = 'open' | 'answered' | 'delivered' | 'done' | 'obsolete' | 'snoozed'
 

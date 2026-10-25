@@ -1,11 +1,14 @@
 <script setup lang="ts">
-import type { ExperimentStatus, IdeaKind, LabFeedback, LabLoopView, LabOverview } from '#shared/types/lab'
+import type { ExperimentStatus, IdeaKind, LabFeedback, LabLoopView, LabOverview, LabReview } from '#shared/types/lab'
 
 useHead({ title: 'Lab loop · Repo Dashboard' })
 
 const { data, error, refresh } = await useFetch<LabOverview>('/api/lab')
 // Ricardo's feedback on ideas, until the PO applied it (from the status service).
 const { data: feedback, refresh: refreshFeedback } = await useFetch<LabFeedback[]>('/api/lab-feedback')
+// The AI review rounds of liked experiments; the newest per experiment is shown on its card.
+const { data: reviews, refresh: refreshReviews } = await useFetch<LabReview[]>('/api/lab-reviews')
+const reviewFor = (id: string) => (reviews.value ?? []).find(r => r.experiment === id) ?? null
 
 // The loop changes on its own (ticks, workers): keep the page current while it is open.
 let timer: ReturnType<typeof setInterval> | undefined
@@ -17,6 +20,7 @@ onMounted(() => {
     void refresh()
     void refreshFeedback()
     void refreshLoop()
+    void refreshReviews()
   }, 30000)
   document.addEventListener('visibilitychange', onVisible)
 })
@@ -350,6 +354,7 @@ const time = (iso: string) => new Date(iso).toLocaleString('en-GB', { weekday: '
                   <ExperimentReview
                     v-if="e.inLabMain && e.status !== 'liked'"
                     :experiment="e"
+                    :review="reviewFor(e.id)"
                     :feedback="feedback ?? []"
                     @changed="refreshFeedback()"
                   />

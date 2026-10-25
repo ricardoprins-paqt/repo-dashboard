@@ -125,3 +125,16 @@ export interface LabLoopView {
   nextTickAt: string | null
   history: Array<{ at: string, event: string, from_state: string, to_state: string, actor: string | null, note: string | null }>
 }
+
+/** An experiment's AI review (the status service's review state machine: review, fix, review, fix, review). */
+export interface LabReview {
+  id: number
+  loop: string
+  experiment: string
+  pr_url: string
+  status: 'queued' | 'review-1' | 'fix-1' | 'review-2' | 'fix-2' | 'review-3' | 'clean' | 'raised' | 'ready' | 'rejected'
+  session: number | null
+  findings: string
+  item_id: number | null
+  events: string[]
+}

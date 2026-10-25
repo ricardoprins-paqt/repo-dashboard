@@ -1,12 +1,25 @@
 <script setup lang="ts">
 import { PDSExpCollapsible } from '@paqtdesign/experimental/vue'
-import type { LabExperiment, LabFeedback } from '#shared/types/lab'
+import type { LabExperiment, LabFeedback, LabReview } from '#shared/types/lab'
 
 /**
  * Ricardo's verdict on an experiment, folded away until he wants it: Like (the PO has the PR reviewed by a fresh session, up to
  * three rounds, then asks him about opening it) or Reject (PR closed, out of lab/main, rejected.md), with optional text.
  */
-const props = defineProps<{ experiment: LabExperiment, feedback: LabFeedback[] }>()
+const props = defineProps<{ experiment: LabExperiment, feedback: LabFeedback[], review?: LabReview | null | undefined }>()
+
+const REVIEW_SAYS: Record<LabReview['status'], string> = {
+  'queued': 'waiting for a reviewer',
+  'review-1': 'first review',
+  'fix-1': 'fixing the first findings',
+  'review-2': 'second review',
+  'fix-2': 'fixing the second findings',
+  'review-3': 'third (last) review',
+  'clean': 'found nothing: your decision is in the inbox',
+  'raised': 'still findings after three reviews: your decision is in the inbox',
+  'ready': 'done: ready for review',
+  'rejected': 'stopped',
+}
 const emit = defineEmits<{ changed: [] }>()
 
 const text = ref('')
@@ -18,7 +31,17 @@ async function act(kind: 'like' | 'reject') {
 </script>
 
 <template>
+  <p
+    v-if="review && review.status !== 'rejected'"
+    class="text-xs text-info-text"
+    :data-testid="`review-status-${experiment.id}`"
+  >
+    AI review (R-{{ review.id }}): {{ REVIEW_SAYS[review.status] }}<template v-if="review.session">
+      · session {{ review.session }}
+    </template>
+  </p>
   <PDSExpCollapsible
+    v-else
     :label="open.length ? 'Your verdict (being handled)' : 'Like or reject'"
     :data-testid="`review-${experiment.id}`"
   >

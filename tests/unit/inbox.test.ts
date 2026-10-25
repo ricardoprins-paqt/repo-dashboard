@@ -22,6 +22,11 @@ describe('needsYouList', () => {
     expect(ids(needsYouList(entries, all, 'oldest'))).toEqual([4, 1, 3, 2])
     expect(ids(needsYouList(entries, all, 'newest'))).toEqual([2, 3, 1, 4])
   })
+  it('puts critical items first, whatever the sort', () => {
+    const withCritical = [...entries, { item: { id: 9, kind: 'fyi', created: '2026-10-24T12:00:00Z', needs_you: true, severity: 'critical' } as InboxItem, task }]
+    expect(ids(needsYouList(withCritical, all, 'kind'))[0]).toBe(9)
+    expect(ids(needsYouList(withCritical, all, 'oldest'))[0]).toBe(9)
+  })
   it('only shows the kinds that are switched on, and only what needs Ricardo', () => {
     expect(ids(needsYouList(entries, new Set<ItemKind>(['review', 'fyi', 'conflict']), 'kind'))).toEqual([3, 1])
   })

@@ -42,10 +42,19 @@ function send() {
 <template>
   <PDSCard
     appearance="outlined"
+    :color="item.severity === 'critical' ? 'danger' : undefined"
     :data-testid="`inbox-item-${item.id}`"
   >
     <div class="flex flex-col gap-2">
       <div class="flex flex-wrap items-center gap-2">
+        <PDSBadge
+          v-if="item.severity === 'critical'"
+          size="sm"
+          appearance="solid"
+          color="danger"
+        >
+          Critical
+        </PDSBadge>
         <PDSBadge
           size="sm"
           appearance="subtle"

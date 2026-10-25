@@ -371,7 +371,6 @@ const time = (iso: string) => new Date(iso).toLocaleString('en-GB', { weekday: '
             v-else
             multiple
             collapsible
-            class="rounded border border-border bg-surface px-4"
           >
             <IdeaRow
               v-for="i in backlog.slice(0, 30)"
@@ -392,7 +391,7 @@ const time = (iso: string) => new Date(iso).toLocaleString('en-GB', { weekday: '
             <PDSAccordion
               multiple
               collapsible
-              class="mt-2 rounded border border-border bg-surface px-4"
+              class="mt-2"
             >
               <IdeaRow
                 v-for="i in parked"

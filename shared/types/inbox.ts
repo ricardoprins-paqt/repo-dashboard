@@ -3,6 +3,8 @@
 export type TaskStatus = 'working' | 'waiting' | 'ready' | 'parked' | 'done' | 'dropped'
 export type ItemKind = 'question' | 'decision' | 'review' | 'conflict' | 'fyi'
 export type ItemStatus = 'open' | 'answered' | 'delivered' | 'done' | 'obsolete' | 'snoozed'
+/** critical: PAQT's own components or tools turned out broken (fix at the source, never work around). Shown first, in red. */
+export type ItemSeverity = 'normal' | 'critical'
 
 export interface InboxAnchor {
   type: 'pr' | 'branch' | 'file' | string
@@ -16,6 +18,7 @@ export interface InboxItem {
   id: number
   task_id: number
   kind: ItemKind
+  severity: ItemSeverity
   title: string
   body: string
   options: string[]

@@ -8,3 +8,5 @@
     whether an experiment is in `lab/main` is decided once in `lab.ts` (`inLabMain`).
 - Run `pnpm lint`, `pnpm typecheck` and `pnpm test` before committing; `pnpm test:e2e` for UI changes (in a separate checkout:
   a build in the service folder disturbs the running dev server).
+- Never work around a bug in a PDS component (CSS that hides a part, extra wrappers, re-implementing it). Leave the
+  symptom visible and raise it: `paqt-ws inbox add --critical ...` from a session folder. The fix belongs in paqt-ds.

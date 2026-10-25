@@ -28,6 +28,9 @@ export function needsYouList(entries: InboxEntry[], kinds: ReadonlySet<ItemKind>
   return entries
     .filter(({ item }) => item.needs_you && kinds.has(item.kind))
     .sort((a, b) => {
+      // Critical items always come first, whatever the sort.
+      const critical = Number(b.item.severity === 'critical') - Number(a.item.severity === 'critical')
+      if (critical) return critical
       if (sort === 'newest') return byDate(b, a)
       if (sort === 'oldest') return byDate(a, b)
       return KIND_RANK[a.item.kind] - KIND_RANK[b.item.kind] || byDate(a, b)

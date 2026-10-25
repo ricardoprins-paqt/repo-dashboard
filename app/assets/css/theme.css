@@ -30,3 +30,16 @@
   color-scheme: dark;
   --pds-text-lightness: 0.78;
 }
+
+/* Small ratings (size="sm"), e.g. the backlog's research and personal ratings: compact stars and no label ("5 - Outstanding").
+ * The label is hidden here because the Vue wrapper cannot turn it off: it passes show-label as an attribute, and false only
+ * removes the attribute while the element defaults to showLabel = true (a paqt-ds bug, in the lab backlog). */
+pds-rating[size='sm'] {
+  --pds-rating-star-size: 1.125rem;
+  --pds-rating-gap: 0.0625rem;
+  --pds-rating-label-min-block-size: 0;
+}
+
+pds-rating[size='sm']::part(label) {
+  display: none;
+}

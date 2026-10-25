@@ -104,9 +104,9 @@ export interface LabOverview {
 export interface LabFeedback {
   id: number
   loop: string
-  target_type: 'idea'
+  target_type: 'idea' | 'experiment'
   target_id: string
-  kind: 'rating' | 'not-now' | 'reject' | 'note'
+  kind: 'rating' | 'not-now' | 'reject' | 'note' | 'like'
   value: number | null
   text: string
   status: 'pending' | 'delivered' | 'applied'

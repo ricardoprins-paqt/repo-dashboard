@@ -288,6 +288,12 @@ const time = (iso: string) => new Date(iso).toLocaleString('en-GB', { weekday: '
                     </a>
                     <span class="ml-auto font-mono text-xs text-foreground-muted">{{ e.branch }}</span>
                   </div>
+                  <ExperimentReview
+                    v-if="e.inLabMain && e.status !== 'liked'"
+                    :experiment="e"
+                    :feedback="feedback ?? []"
+                    @changed="refreshFeedback()"
+                  />
                 </div>
               </PDSCard>
             </li>
@@ -361,9 +367,11 @@ const time = (iso: string) => new Date(iso).toLocaleString('en-GB', { weekday: '
           >
             No ideas yet: the first research run fills the backlog.
           </p>
-          <ol
+          <PDSAccordion
             v-else
-            class="flex flex-col divide-y divide-border rounded border border-border bg-surface"
+            multiple
+            collapsible
+            class="rounded border border-border bg-surface px-4"
           >
             <IdeaRow
               v-for="i in backlog.slice(0, 30)"
@@ -373,7 +381,7 @@ const time = (iso: string) => new Date(iso).toLocaleString('en-GB', { weekday: '
               :kind-label="i.kind ? KIND[i.kind] : undefined"
               @changed="refreshFeedback()"
             />
-          </ol>
+          </PDSAccordion>
           <details
             v-if="parked.length"
             class="text-sm"
@@ -381,7 +389,11 @@ const time = (iso: string) => new Date(iso).toLocaleString('en-GB', { weekday: '
             <summary class="cursor-pointer text-foreground-muted">
               {{ parked.length }} parked (below {{ fun.minStarsToBuild }} stars, or "not now": never built; rate one up to bring it back)
             </summary>
-            <ul class="mt-2 flex flex-col divide-y divide-border rounded border border-border bg-surface">
+            <PDSAccordion
+              multiple
+              collapsible
+              class="mt-2 rounded border border-border bg-surface px-4"
+            >
               <IdeaRow
                 v-for="i in parked"
                 :key="i.id"
@@ -390,7 +402,7 @@ const time = (iso: string) => new Date(iso).toLocaleString('en-GB', { weekday: '
                 :kind-label="i.kind ? KIND[i.kind] : undefined"
                 @changed="refreshFeedback()"
               />
-            </ul>
+            </PDSAccordion>
           </details>
         </section>
 

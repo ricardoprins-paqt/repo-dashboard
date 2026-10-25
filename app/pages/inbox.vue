@@ -192,7 +192,7 @@ function renderHandoff(md: string) {
               :key="a.kind"
               class="text-xs font-semibold text-info-text"
             >{{ a.kind === 'worker' ? `Worker: ${a.label}` : 'Research running' }}<template v-if="a.since">
-              · {{ relativeTime(a.since) }}
+              · <RelativeTime :at="a.since" />
             </template></span>
             <button
               v-if="!s.reserved"
@@ -307,7 +307,7 @@ function renderHandoff(md: string) {
                   <div class="min-w-0">
                     <p class="text-xs text-foreground-muted">
                       <span class="font-mono font-semibold text-foreground">T-{{ t.id }}</span>
-                      · session {{ t.session ?? '?' }} · updated {{ relativeTime(t.updated) }}<template v-if="openCount(t)">
+                      · session {{ t.session ?? '?' }} · updated <RelativeTime :at="t.updated" /><template v-if="openCount(t)">
                         · {{ openCount(t) }} for you
                       </template>
                     </p>

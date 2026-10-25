@@ -55,7 +55,7 @@ function send() {
         </PDSBadge>
         <span class="text-xs text-foreground-muted">
           <span class="font-mono font-semibold text-foreground">I-{{ item.id }}</span>
-          · T-{{ task.id }} {{ task.title }} · session {{ task.session ?? '?' }} · {{ relativeTime(item.created) }}
+          · T-{{ task.id }} {{ task.title }} · session {{ task.session ?? '?' }} · <RelativeTime :at="item.created" />
         </span>
       </div>
       <h3 class="font-semibold">

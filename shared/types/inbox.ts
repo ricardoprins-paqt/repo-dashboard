@@ -39,6 +39,18 @@ export interface InboxItem {
   updated: string
 }
 
+/** A result a task depends on (list, analysis, plan, report), kept with the task instead of only in a chat. */
+export interface InboxAttachment {
+  id: number
+  task_id?: number
+  item_id: number | null
+  title: string
+  source: string
+  created: string
+  size?: number
+  content?: string
+}
+
 export interface InboxTask {
   id: number
   title: string
@@ -61,6 +73,7 @@ export interface InboxTask {
   summarized_at: string | null
   closed_note: string | null
   items: InboxItem[]
+  attachments: InboxAttachment[]
 }
 
 export interface InboxSession {

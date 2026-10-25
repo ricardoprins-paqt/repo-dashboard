@@ -341,6 +341,18 @@ function renderHandoff(md: string) {
                   <!-- eslint-enable vue/no-v-html -->
                 </details>
                 <p
+                  v-if="t.attachments?.length"
+                  class="flex flex-wrap gap-x-3 gap-y-1 text-sm"
+                >
+                  <span class="text-foreground-muted">Attached:</span>
+                  <NuxtLink
+                    v-for="a in t.attachments"
+                    :key="a.id"
+                    :to="`/attachments/${a.id}`"
+                    class="underline"
+                  >A-{{ a.id }} {{ a.title }}</NuxtLink>
+                </p>
+                <p
                   v-if="t.next"
                   class="text-sm"
                 >

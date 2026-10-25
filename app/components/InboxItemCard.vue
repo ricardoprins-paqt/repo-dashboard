@@ -23,6 +23,7 @@ const KIND = {
 } as const
 
 const text = ref('')
+const itemAttachments = computed(() => (props.task.attachments ?? []).filter(a => a.item_id === props.item.id))
 const backlog = ref(false)
 const answerable = computed(() => props.item.kind === 'decision' || props.item.kind === 'question' || props.item.options.length > 0)
 const waitingForDelivery = computed(() => props.item.status === 'answered')
@@ -75,6 +76,17 @@ function send() {
         class="whitespace-pre-line text-sm"
       >
         {{ item.body }}
+      </p>
+      <p
+        v-if="itemAttachments.length"
+        class="flex flex-wrap gap-x-3 gap-y-1 text-sm"
+      >
+        <NuxtLink
+          v-for="a in itemAttachments"
+          :key="a.id"
+          :to="`/attachments/${a.id}`"
+          class="font-semibold underline"
+        >A-{{ a.id }} {{ a.title }}</NuxtLink>
       </p>
       <p
         v-if="item.anchors.length"

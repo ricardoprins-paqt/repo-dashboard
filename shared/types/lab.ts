@@ -123,6 +123,8 @@ export interface LabLoopView {
   lastTickAt: string | null
   timerRanAt: string | null
   nextTickAt: string | null
+  /** The last count of open PRs against the loop's limit (null without a limit). */
+  openPRs: { count: number | null, max: number, label: string, at: string | null } | null
   history: Array<{ at: string, event: string, from_state: string, to_state: string, actor: string | null, note: string | null }>
 }
 

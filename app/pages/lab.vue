@@ -201,6 +201,16 @@ const time = (iso: string) => new Date(iso).toLocaleString('en-GB', { weekday: '
                   </template>
                 </span>
                 <span
+                  v-if="loop?.openPRs?.count != null"
+                  class="text-xs"
+                  :class="loop.openPRs.count >= loop.openPRs.max ? 'font-semibold text-warning-text' : 'text-foreground-muted'"
+                  data-testid="lab-open-prs"
+                >
+                  {{ loop.openPRs.count }} of {{ loop.openPRs.max }} open {{ loop.openPRs.label }} PRs<template v-if="loop.openPRs.at">
+                    · counted <RelativeTime :at="loop.openPRs.at" />
+                  </template>
+                </span>
+                <span
                   v-if="loop?.events.length"
                   class="pt-1"
                 >

@@ -9,6 +9,7 @@
  * - `loop-tick` `{ loop }`: a tick for a loop now (`paqt-loop tick <loop> --force`, guardrails still apply)
  * - `loop-research` `{ loop }`: ask a loop's session to start research now
  * The last three answer `{ ok, output }`: the tool's last line, to show on the page.
+ * Every status change is checked by the status service's state machines; actions here are Ricardo's (actor "ricardo").
  */
 export default defineEventHandler(async (event) => {
   assertLocalAction(event)
@@ -20,13 +21,13 @@ export default defineEventHandler(async (event) => {
   switch (body.action) {
     case 'answer':
       if (!String(body.answer ?? '').trim()) throw createError({ statusCode: 400, statusMessage: 'Empty answer' })
-      return await post('/api/inbox/answer', { id, answer: String(body.answer).trim(), backlog: Boolean(body.backlog) })
+      return await post('/api/inbox/answer', { id, answer: String(body.answer).trim(), backlog: Boolean(body.backlog), actor: 'ricardo' })
     case 'close':
-      return await post('/api/inbox/item', { id, status: 'done', note: body.note ? String(body.note) : 'closed by Ricardo' })
+      return await post('/api/inbox/item', { id, status: 'done', note: body.note ? String(body.note) : 'closed by Ricardo', actor: 'ricardo' })
     case 'snooze':
-      return await post('/api/inbox/item', { id, status: 'snoozed', snooze_until: String(body.until) })
+      return await post('/api/inbox/item', { id, status: 'snoozed', snooze_until: String(body.until), actor: 'ricardo' })
     case 'task-close':
-      return await post('/api/inbox/task', { id, status: body.status === 'dropped' ? 'dropped' : 'done', closed_note: body.note ? String(body.note) : 'closed by Ricardo' })
+      return await post('/api/inbox/task', { id, status: body.status === 'dropped' ? 'dropped' : 'done', closed_note: body.note ? String(body.note) : 'closed by Ricardo', actor: 'ricardo' })
     case 'check':
       return await post('/api/inbox/check', {}, 180000)
     case 'loop-tick':

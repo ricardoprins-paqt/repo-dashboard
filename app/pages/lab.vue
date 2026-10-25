@@ -358,12 +358,12 @@ const time = (iso: string) => new Date(iso).toLocaleString('en-GB', { weekday: '
           </p>
           <ol
             v-else
-            class="flex flex-col divide-y divide-border rounded border border-border"
+            class="flex flex-col divide-y divide-border rounded border border-border bg-surface"
           >
             <li
               v-for="i in backlog.slice(0, 20)"
               :key="i.id"
-              class="flex flex-wrap items-baseline gap-x-3 gap-y-1 px-4 py-2 text-sm"
+              class="flex flex-wrap items-baseline gap-x-3 gap-y-1.5 px-5 py-3.5 text-sm"
             >
               <span
                 class="w-20 shrink-0 whitespace-nowrap text-warning-text"
@@ -389,11 +389,11 @@ const time = (iso: string) => new Date(iso).toLocaleString('en-GB', { weekday: '
             <summary class="cursor-pointer text-foreground-muted">
               {{ parked.length }} parked (below {{ fun.minStarsToBuild }} stars: never built; tell the PO "rate X higher" to bring one back)
             </summary>
-            <ul class="mt-2 flex flex-col divide-y divide-border rounded border border-border">
+            <ul class="mt-2 flex flex-col divide-y divide-border rounded border border-border bg-surface">
               <li
                 v-for="i in parked"
                 :key="i.id"
-                class="flex flex-wrap items-baseline gap-x-3 gap-y-1 px-4 py-2"
+                class="flex flex-wrap items-baseline gap-x-3 gap-y-1.5 px-5 py-3.5"
               >
                 <span
                   class="w-20 shrink-0 whitespace-nowrap text-warning-text"

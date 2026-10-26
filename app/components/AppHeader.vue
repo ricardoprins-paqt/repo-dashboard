@@ -35,6 +35,7 @@ function onSelect(event: CustomEvent<{ id: string, checked?: boolean }>) {
 
 <template>
   <div class="sticky top-0 z-30">
+    <StatusServiceBanner />
     <DataSyncBanner />
     <header class="border-b border-border bg-surface">
       <div class="mx-auto flex w-full max-w-[84rem] flex-wrap items-center gap-x-6 gap-y-3 px-4 py-3 sm:px-8">

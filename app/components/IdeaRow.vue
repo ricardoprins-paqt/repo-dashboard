@@ -10,7 +10,7 @@ const props = defineProps<{ idea: LabIdea, feedback: LabFeedback[], kindLabel?: 
 const emit = defineEmits<{ changed: [] }>()
 
 const text = ref('')
-const { sending, error, open, applied, openText, send } = useLabFeedback('idea', () => props.idea.id, () => props.feedback, () => emit('changed'))
+const { sending, error, open, applied, openText, send, verdict, choiceText } = useLabFeedback('idea', () => props.idea.id, () => props.feedback, () => emit('changed'))
 // His rating: one he just gave (not applied yet), else the one the PO applied.
 const myRating = computed(() => open.value.filter(f => f.kind === 'rating').at(-1)?.value ?? props.idea.ricardoValue ?? undefined)
 
@@ -101,20 +101,20 @@ function onRating(event: Event) {
       <div class="flex flex-wrap gap-2">
         <PDSButton
           size="sm"
-          appearance="outlined"
+          :appearance="verdict?.kind === 'not-now' ? 'solid' : 'outlined'"
           :disabled="sending"
           @click="act('not-now')"
         >
-          Not now
+          {{ verdict?.kind === 'not-now' ? 'Not now ✓' : 'Not now' }}
         </PDSButton>
         <PDSButton
           size="sm"
-          appearance="outlined"
+          :appearance="verdict?.kind === 'reject' ? 'solid' : 'outlined'"
           color="danger"
           :disabled="sending"
           @click="act('reject')"
         >
-          Reject: never anything like it
+          {{ verdict?.kind === 'reject' ? 'Rejected ✓' : 'Reject: never anything like it' }}
         </PDSButton>
       </div>
 
@@ -123,7 +123,7 @@ function onRating(event: Event) {
         class="text-xs text-info-text"
         role="status"
       >
-        {{ openText }}
+        {{ openText }} {{ choiceText }}
       </p>
       <p
         v-else-if="applied"

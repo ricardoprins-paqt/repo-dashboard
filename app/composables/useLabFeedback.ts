@@ -21,6 +21,18 @@ export function useLabFeedback(target: Target, id: () => string, all: () => LabF
   const mine = computed(() => (all() ?? []).filter(f => f.target_type === target && f.target_id === id()))
   const open = computed(() => mine.value.filter(f => f.status !== 'applied'))
   const applied = computed(() => mine.value.filter(f => f.status === 'applied' && f.applied_note).at(-1) ?? null)
+  // His current verdict (like / reject / not now) and note, until the PO applied them. While still pending, a new click
+  // replaces them (the status service does that); once delivered, a new click is sent as a correction.
+  const VERDICTS = ['like', 'reject', 'not-now']
+  const verdict = computed(() => open.value.filter(f => VERDICTS.includes(f.kind)).at(-1) ?? null)
+  const note = computed(() => open.value.filter(f => f.kind === 'note').at(-1) ?? null)
+  const choiceText = computed(() => {
+    const v = verdict.value
+    if (!v) return ''
+    return v.status === 'pending'
+      ? 'You can still change it until it goes out.'
+      : 'It is with the product owner; a new choice is sent as a correction.'
+  })
   const openText = computed(() => {
     if (!open.value.length) return ''
     const what = open.value.map(f => SAYS[f.kind](f) + (f.text ? `: "${f.text}"` : '')).join(' · ')
@@ -47,5 +59,5 @@ export function useLabFeedback(target: Target, id: () => string, all: () => LabF
     }
   }
 
-  return { sending, error, open, applied, openText, send }
+  return { sending, error, open, applied, openText, send, verdict, note, choiceText }
 }

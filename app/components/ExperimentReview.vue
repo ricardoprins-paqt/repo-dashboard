@@ -23,10 +23,15 @@ const REVIEW_SAYS: Record<LabReview['status'], string> = {
 const emit = defineEmits<{ changed: [] }>()
 
 const text = ref('')
-const { sending, error, open, applied, openText, send } = useLabFeedback('experiment', () => props.experiment.id, () => props.feedback, () => emit('changed'))
+const { sending, error, open, applied, openText, send, verdict, note, choiceText } = useLabFeedback('experiment', () => props.experiment.id, () => props.feedback, () => emit('changed'))
+// Show the note that has not gone out yet, so he can change it (sending again replaces it).
+watch(note, (n) => {
+  if (n && n.status === 'pending' && !text.value) text.value = n.text
+}, { immediate: true })
 
 async function act(kind: 'like' | 'reject' | 'note') {
-  if (await send(kind, { text: text.value.trim() })) text.value = ''
+  // A note stays in the field (he may refine it); a verdict clears it.
+  if (await send(kind, { text: text.value.trim() }) && kind !== 'note') text.value = ''
 }
 </script>
 
@@ -55,12 +60,12 @@ async function act(kind: 'like' | 'reject' | 'note') {
       <div class="flex flex-wrap gap-2">
         <PDSButton
           size="sm"
-          appearance="outlined"
+          :appearance="verdict?.kind === 'like' ? 'solid' : 'outlined'"
           color="success"
           :disabled="sending"
           @click="act('like')"
         >
-          Like: review it
+          {{ verdict?.kind === 'like' ? 'Liked ✓' : 'Like: review it' }}
         </PDSButton>
         <PDSButton
           size="sm"
@@ -68,16 +73,16 @@ async function act(kind: 'like' | 'reject' | 'note') {
           :disabled="sending || !text.trim()"
           @click="act('note')"
         >
-          Feedback
+          {{ note ? 'Update feedback' : 'Feedback' }}
         </PDSButton>
         <PDSButton
           size="sm"
-          appearance="outlined"
+          :appearance="verdict?.kind === 'reject' ? 'solid' : 'outlined'"
           color="danger"
           :disabled="sending"
           @click="act('reject')"
         >
-          Reject
+          {{ verdict?.kind === 'reject' ? 'Rejected ✓' : 'Reject' }}
         </PDSButton>
       </div>
       <p class="text-xs text-foreground-muted">
@@ -89,7 +94,7 @@ async function act(kind: 'like' | 'reject' | 'note') {
         class="text-xs text-info-text"
         role="status"
       >
-        {{ openText }}
+        {{ openText }} {{ choiceText }}
       </p>
       <p
         v-else-if="applied"

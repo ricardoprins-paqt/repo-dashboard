@@ -7,7 +7,7 @@ const SAYS: Record<Kind, (f: LabFeedback) => string> = {
   'rating': f => `${f.value} stars`,
   'not-now': () => 'not now',
   'reject': () => 'rejected',
-  'note': () => 'context',
+  'note': () => 'feedback',
   'like': () => 'like: review it',
 }
 

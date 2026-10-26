@@ -25,7 +25,7 @@ const emit = defineEmits<{ changed: [] }>()
 const text = ref('')
 const { sending, error, open, applied, openText, send } = useLabFeedback('experiment', () => props.experiment.id, () => props.feedback, () => emit('changed'))
 
-async function act(kind: 'like' | 'reject') {
+async function act(kind: 'like' | 'reject' | 'note') {
   if (await send(kind, { text: text.value.trim() })) text.value = ''
 }
 </script>
@@ -49,7 +49,7 @@ async function act(kind: 'like' | 'reject') {
       <PDSTextarea
         v-model="text"
         :rows="2"
-        placeholder="Anything the product owner should know (optional)"
+        placeholder="Feedback to work into it, or a reason for Like or Reject"
         :aria-label="`Note about ${experiment.name}`"
       />
       <div class="flex flex-wrap gap-2">
@@ -65,6 +65,14 @@ async function act(kind: 'like' | 'reject') {
         <PDSButton
           size="sm"
           appearance="outlined"
+          :disabled="sending || !text.trim()"
+          @click="act('note')"
+        >
+          Feedback
+        </PDSButton>
+        <PDSButton
+          size="sm"
+          appearance="outlined"
           color="danger"
           :disabled="sending"
           @click="act('reject')"
@@ -73,6 +81,7 @@ async function act(kind: 'like' | 'reject') {
         </PDSButton>
       </div>
       <p class="text-xs text-foreground-muted">
+        Feedback: the product owner has it worked into the experiment; it stays open, so you like or reject it afterwards.
         Like: a fresh AI session reviews the PR (up to three rounds, with fixes in between); then you decide in your inbox whether it leaves draft.
       </p>
       <p

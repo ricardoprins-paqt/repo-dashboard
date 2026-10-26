@@ -24,7 +24,10 @@ export function useLabFeedback(target: Target, id: () => string, all: () => LabF
   const openText = computed(() => {
     if (!open.value.length) return ''
     const what = open.value.map(f => SAYS[f.kind](f) + (f.text ? `: "${f.text}"` : '')).join(' · ')
-    return `Your feedback (${what}) ${open.value.some(f => f.status === 'delivered') ? 'is with the product owner' : 'goes to the product owner shortly'}.`
+    if (open.value.some(f => f.status === 'delivered')) return `Your feedback (${what}) is with the product owner.`
+    // Ratings wait until the clicking stopped (lss-tools feedbackDue); everything else goes at the next dispatcher run.
+    const when = open.value.some(f => f.kind === 'rating') ? 'about two minutes after your last star' : 'within a minute'
+    return `Your feedback (${what}) goes to the product owner ${when}.`
   })
 
   async function send(kind: Kind, extra: { value?: number, text?: string } = {}) {

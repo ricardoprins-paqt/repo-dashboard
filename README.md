@@ -70,6 +70,7 @@ pnpm repos --json               # everything, machine readable
 | `server/api/repos.get.ts`, `repos.post.ts` | `GET /api/repos?github=0\|1&refresh=1`, `POST /api/repos` (fetch) |
 | `app/pages/index.vue` | The dashboard page |
 | `app/utils/overview.ts` | Filtering, sorting and summary logic for the page |
+| `app/utils/markdown.ts` | Renders Markdown attachments (`/attachments/<id>`) as HTML; raw HTML in them is escaped, never run |
 | `scripts/repos-status.ts` | The terminal view |
 
 The page paints local git state first (well under a second) and fills in GitHub data when it arrives. It refreshes itself every minute while the tab is visible, unless you turn off *Auto-refresh*.

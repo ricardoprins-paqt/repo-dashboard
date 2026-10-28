@@ -71,6 +71,8 @@ pnpm repos --json               # everything, machine readable
 | `app/pages/index.vue` | The dashboard page |
 | `app/utils/overview.ts` | Filtering, sorting and summary logic for the page |
 | `app/utils/markdown.ts` | Renders Markdown attachments (`/attachments/<id>`) as HTML; raw HTML in them is escaped, never run |
+| `server/lib/files.ts`, `server/api/files/` | The `/files?path=` page: a file or folder under `~/workspace` (Markdown formatted, images and PDFs shown, folders with an image gallery) |
+| `server/lib/inbox-files.ts`, `app/utils/links.ts` | Inbox items: file anchors and paths in the text that exist become links to `/files`, URLs become links |
 | `scripts/repos-status.ts` | The terminal view |
 
 The page paints local git state first (well under a second) and fills in GitHub data when it arrives. It refreshes itself every minute while the tab is visible, unless you turn off *Auto-refresh*.
@@ -90,6 +92,15 @@ Components: cards (`PDSCard`), buttons, badges, tabs, slideover, input, select a
 `PDSCard` has no click support, so each card (and summary tile) contains a native `<button>` stretched over the whole card with an `after:absolute after:inset-0` pseudo-element. The card is then one click target and one tab stop, and the repo name stays a real heading.
 
 Icons: `app/plugins/icons.client.ts` registers a bundled Lucide subset (listed in `app/utils/icons.ts`) so `PDSIcon` does not call the Iconify API. It uses `iconify-icon` directly, because importing PDS's `registerIconCollection` defines `<pds-icon>` first, which already starts the remote lookups.
+
+## Files
+
+Inbox items often point to a file or folder (a report, a plan, a folder of screenshots). `/files?path=<path>` shows it, so
+nobody needs a terminal to find it. A relative path (`pds-backlog/reports/x.md`, `packages/vue/...`) is looked up in the
+checkouts under `~/workspace`, first in the item's own session folder, then the hubs; a bare name counts only when one place
+has it. Only files under `~/workspace` (or `REPO_DASHBOARD_FILES_ROOT`) are served, never hidden ones (`.env`, `.git`, ...)
+or keys, and only to a local Host. Raw files are sandboxed (an SVG or HTML file cannot run script on the dashboard), except
+PDFs, which the browser's viewer needs.
 
 ## Checks
 

@@ -9,6 +9,11 @@ const isLocal = (value: string) => {
   return name === 'localhost' || name === '127.0.0.1' || name.endsWith('.localhost')
 }
 
+/** Pages and files are only for this machine: a request whose Host is another name (DNS rebinding) is refused. */
+export function assertLocalHost(event: H3Event) {
+  if (!isLocal(getRequestHeader(event, 'host') ?? '')) throw createError({ statusCode: 403, statusMessage: 'Forbidden' })
+}
+
 /**
  * An answer gets typed into a Claude session, so only this dashboard may send one: a local Host, a local Origin when the browser
  * sends one, and the X-LSS-Action header that a page on another site cannot add without a CORS preflight.

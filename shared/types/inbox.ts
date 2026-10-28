@@ -12,6 +12,8 @@ export interface InboxAnchor {
   repo?: string
   name?: string
   path?: string
+  /** Added by the dashboard (server/lib/inbox-files.ts): where a file anchor's path really is, to open it on /files. */
+  resolved?: string
 }
 
 export interface InboxItem {
@@ -37,6 +39,8 @@ export interface InboxItem {
   needs_you: boolean
   created: string
   updated: string
+  /** Added by the dashboard: file paths written in the body that exist, with where they really are (opened on /files). */
+  paths?: Record<string, string>
 }
 
 /** A result a task depends on (list, analysis, plan, report), kept with the task instead of only in a chat. */

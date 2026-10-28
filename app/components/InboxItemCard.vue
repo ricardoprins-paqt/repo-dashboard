@@ -75,7 +75,10 @@ function send() {
         v-if="item.body"
         class="whitespace-pre-line text-sm"
       >
-        {{ item.body }}
+        <LinkedText
+          :text="item.body"
+          :paths="item.paths"
+        />
       </p>
       <p
         v-if="itemAttachments.length"
@@ -103,9 +106,15 @@ function send() {
             rel="noopener"
             class="underline"
           >{{ anchorLabel(a) }}</a>
+          <NuxtLink
+            v-else-if="a.resolved"
+            :to="fileHref(a.resolved)"
+            class="wrap-anywhere font-mono text-xs underline"
+          >{{ anchorLabel(a) }}</NuxtLink>
           <span
             v-else
             class="font-mono text-xs text-foreground-muted"
+            :title="a.type === 'file' ? 'Not found in the workspace' : undefined"
           >{{ anchorLabel(a) }}</span>
         </template>
       </p>

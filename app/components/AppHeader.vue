@@ -26,6 +26,18 @@ const menuItems = computed<DropdownMenuItem[]>(() => [
   { id: 'theme-dark', label: 'Dark mode', type: 'checkbox', checked: theme.value === 'dark' },
 ])
 
+// The sticky block's height (banners included) as --app-header-height, so link targets land below it (.inbox-anchor).
+const sticky = ref<HTMLElement | null>(null)
+let resize: ResizeObserver | undefined
+onMounted(() => {
+  if (!sticky.value) return
+  resize = new ResizeObserver(([entry]) => {
+    document.documentElement.style.setProperty('--app-header-height', `${Math.round(entry?.target.getBoundingClientRect().height ?? 0)}px`)
+  })
+  resize.observe(sticky.value)
+})
+onBeforeUnmount(() => resize?.disconnect())
+
 function onSelect(event: CustomEvent<{ id: string, checked?: boolean }>) {
   const { id, checked } = event.detail
   if (id === 'theme-dark') toggleTheme()
@@ -34,7 +46,10 @@ function onSelect(event: CustomEvent<{ id: string, checked?: boolean }>) {
 </script>
 
 <template>
-  <div class="sticky top-0 z-30">
+  <div
+    ref="sticky"
+    class="sticky top-0 z-30"
+  >
     <StatusServiceBanner />
     <DataSyncBanner />
     <header class="border-b border-border bg-surface">

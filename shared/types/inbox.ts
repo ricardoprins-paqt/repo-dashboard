@@ -37,6 +37,11 @@ export interface InboxItem {
   source: string
   /** Decided by the status service (inbox.py NEEDS_YOU): Ricardo still has to act on it. */
   needs_you: boolean
+  /**
+   * Set while the item is held in a chat: the session asked it while Ricardo was talking to it directly, so it stays out of
+   * the inbox (hidden everywhere) until he hasn't answered in that chat for a while. Null once it shows.
+   */
+  held_since?: string | null
   created: string
   updated: string
   /** Added by the dashboard: file paths written in the body that exist, with where they really are (opened on /files). */
@@ -106,5 +111,15 @@ export interface InboxOverview {
   pins: number[]
   /** Sessions with a fixed job (builder, lab PO, assistant): never used to resume a task. */
   reserved: number[]
+  /** Sessions with items held in their chat (see InboxItem.held_since), by session number. */
+  waitingInChat?: InboxWaitingInChat[]
   generatedAt: string
+}
+
+/** A session that asked Ricardo something in its chat that he hasn't answered yet (its items are held, not shown). */
+export interface InboxWaitingInChat {
+  session: number
+  items: number[]
+  /** When the oldest of those items was asked. */
+  since: string
 }

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { PDSExpCallout } from '@paqtdesign/experimental/vue'
 import type { InboxOverview, InboxTask, ItemKind, TaskStatus } from '#shared/types/inbox'
 
 useHead({ title: 'Inbox · Repo Dashboard' })
@@ -60,7 +61,17 @@ const tomorrow = () => {
 }
 
 const tasks = computed(() => data.value?.tasks ?? [])
-const allNeedsYou = computed(() => tasks.value.flatMap(task => task.items.map(item => ({ item, task }))).filter(({ item }) => item.needs_you))
+// Items held in a chat (held_since) are not shown anywhere; the status service already leaves them out of needs_you.
+const allNeedsYou = computed(() => tasks.value.flatMap(task => task.items.map(item => ({ item, task }))).filter(({ item }) => item.needs_you && !item.held_since))
+
+// Sessions that asked something in their chat that Ricardo hasn't answered there yet: one quiet line, no cards.
+const waitingInChat = computed(() => data.value?.waitingInChat ?? [])
+const waitingLine = computed(() => {
+  const n = waitingInChat.value.map(w => w.session)
+  if (!n.length) return ''
+  if (n.length === 1) return `Session ${n[0]} is waiting for you in its chat`
+  return `Sessions ${n.slice(0, -1).join(', ')} and ${n.at(-1)} are waiting for you in their chat`
+})
 
 // Filters (which kinds) and sorting for "Needs you", remembered in this browser.
 const PREFS_KEY = 'repo-dashboard:inbox'
@@ -98,6 +109,43 @@ const needsYou = computed(() => needsYouList(allNeedsYou.value, shownKinds.value
 const hiddenCount = computed(() => allNeedsYou.value.length - needsYou.value.length)
 const snoozed = computed(() => tasks.value.flatMap(t => t.items).filter(i => i.status === 'snoozed' && i.snooze_until && Date.parse(i.snooze_until) > Date.now()).length)
 
+// Links to a card (/inbox#I-374, from item text, handoffs, other pages): after the data is there, scroll it into view below
+// the sticky header (.inbox-anchor), highlight it for a moment, and say why when it has no card on the page.
+const route = useRoute()
+const anchorNotice = ref<string | null>(null)
+let flashTimer: ReturnType<typeof setTimeout> | undefined
+async function goToItem(hash: string) {
+  const id = itemFromHash(hash)
+  if (id === null || !data.value) return
+  let found = locateItem(tasks.value, id, shownKinds.value)
+  if (found.place === 'filtered') {
+    shownKinds.value = new Set([...shownKinds.value, found.item.kind])
+    found = { ...found, place: 'shown' }
+  }
+  anchorNotice.value = placeNotice(id, found)
+  if (found.place !== 'shown') return
+  await nextTick()
+  const card = document.getElementById(`I-${id}`)
+  if (!card) return
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  card.scrollIntoView({ block: 'start', behavior: reduce ? 'auto' : 'smooth' })
+  card.classList.add('inbox-anchor-flash')
+  clearTimeout(flashTimer)
+  flashTimer = setTimeout(() => card.classList.remove('inbox-anchor-flash'), 2400)
+}
+function onHashChange() {
+  void goToItem(window.location.hash)
+}
+onMounted(() => {
+  void goToItem(route.hash)
+  window.addEventListener('hashchange', onHashChange)
+})
+onBeforeUnmount(() => {
+  window.removeEventListener('hashchange', onHashChange)
+  clearTimeout(flashTimer)
+})
+watch(() => route.hash, hash => void goToItem(hash))
+
 const STATUS: Record<TaskStatus, { label: string, color?: 'success' | 'warning' | 'info' | 'danger' }> = {
   working: { label: 'Working', color: 'info' },
   waiting: { label: 'Waiting for you', color: 'warning' },
@@ -116,16 +164,6 @@ const canBacklog = (task: InboxTask) => data.value?.sessions.some(s => s.n === t
 // Session strip: what each session is on now.
 // Session strip: what each session is on now. Reserved, pinned, loop and free come from the status service.
 const sessions = computed(() => (data.value?.sessions ?? []).map(s => ({ ...s, task: tasks.value.find(t => t.id === s.task_id) })))
-
-// The handoff is short markdown: escape it, then allow **bold**, bullets and links.
-function renderHandoff(md: string) {
-  const esc = md.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-  return esc
-    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-    .replace(/`([^`]+)`/g, '<code>$1</code>')
-    .replace(/(https?:\/\/[^\s<)]+)/g, '<a class="underline" href="$1" target="_blank" rel="noopener">$1</a>')
-    .split('\n').map(l => (/^\s*[-*] /.test(l) ? `<span class="block pl-4 -indent-3">• ${l.replace(/^\s*[-*] /, '')}</span>` : `<span class="block">${l}</span>`)).join('')
-}
 </script>
 
 <template>
@@ -186,7 +224,7 @@ function renderHandoff(md: string) {
                 :class="s.status === 'busy' ? 'text-info-text' : s.free ? 'text-success-text' : 'text-foreground-muted'"
               >{{ s.status === 'busy' ? 'busy' : s.reserved ? 'reserved' : s.loop ? 'loop' : s.pinned ? 'yours' : s.free ? 'free' : s.status }}</span>
             </div>
-            <span class="line-clamp-2 text-xs text-foreground-muted">{{ s.task?.title ?? s.name ?? 'No task' }}</span>
+            <span class="line-clamp-2 text-xs text-foreground-muted"><LinkedText :text="s.task?.title ?? s.name ?? 'No task'" /></span>
             <span
               v-for="a in s.activity"
               :key="a.kind"
@@ -249,6 +287,34 @@ function renderHandoff(md: string) {
             {{ allShown ? 'Click a type to see only that one; ⌘/Ctrl-click to add another' : 'Click it again for all types · ⌘/Ctrl-click to add or remove one' }}
           </span>
         </div>
+        <PDSExpCallout
+          v-if="waitingLine"
+          appearance="subtle"
+          color="info"
+          icon="lucide:message-circle-question"
+          :heading="waitingLine"
+          data-testid="waiting-in-chat"
+        >
+          <template #description>
+            <span class="text-sm">
+              Answer there; whatever is still open after 15 minutes without an answer shows up here.
+              <template
+                v-for="(w, i) in waitingInChat"
+                :key="w.session"
+              >
+                {{ i ? '·' : '' }} Session {{ w.session }} asked <RelativeTime :at="w.since" />
+              </template>
+            </span>
+          </template>
+        </PDSExpCallout>
+        <p
+          v-if="anchorNotice"
+          role="status"
+          class="text-sm text-foreground-muted"
+          data-testid="anchor-notice"
+        >
+          {{ anchorNotice }}
+        </p>
         <p
           v-if="!needsYou.length"
           class="text-sm text-foreground-muted"
@@ -312,7 +378,7 @@ function renderHandoff(md: string) {
                       </template>
                     </p>
                     <h3 class="font-semibold">
-                      {{ t.title }}
+                      <LinkedText :text="t.title" />
                     </h3>
                   </div>
                   <PDSBadge
@@ -327,7 +393,7 @@ function renderHandoff(md: string) {
                   v-if="t.asked"
                   class="text-sm"
                 >
-                  <span class="text-foreground-muted">Asked:</span> {{ t.asked }}
+                  <span class="text-foreground-muted">Asked:</span> <LinkedText :text="t.asked" />
                 </p>
                 <details class="text-sm">
                   <summary class="cursor-pointer text-foreground-muted">
@@ -356,7 +422,7 @@ function renderHandoff(md: string) {
                   v-if="t.next"
                   class="text-sm"
                 >
-                  <span class="text-foreground-muted">Next:</span> {{ t.next }}
+                  <span class="text-foreground-muted">Next:</span> <LinkedText :text="t.next" />
                 </p>
                 <div class="mt-auto flex flex-wrap items-center gap-x-4 gap-y-1 pt-1 text-sm">
                   <a
@@ -395,8 +461,8 @@ function renderHandoff(md: string) {
               v-for="t in closedTasks"
               :key="t.id"
             >
-              T-{{ t.id }} · session {{ t.session }} · {{ t.title }} · {{ STATUS[t.status]?.label }}<template v-if="t.closed_note">
-                ({{ t.closed_note }})
+              T-{{ t.id }} · session {{ t.session }} · <LinkedText :text="t.title" /> · {{ STATUS[t.status]?.label }}<template v-if="t.closed_note">
+                (<LinkedText :text="t.closed_note" />)
               </template>
             </li>
           </ul>

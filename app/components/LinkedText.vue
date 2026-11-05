@@ -1,11 +1,14 @@
 <script setup lang="ts">
-/** Plain text with its web links and workspace file paths clickable (app/utils/links.ts). Keep `whitespace-pre-line` on the parent. */
+/**
+ * Plain text with its web links, workspace file paths and inbox item references (I-374, to that card on /inbox) clickable
+ * (app/utils/links.ts). Keep `whitespace-pre-line` on the parent where line breaks matter.
+ */
 const props = defineProps<{
-  text: string
+  text: string | null | undefined
   paths?: Record<string, string> | undefined
 }>()
 
-const parts = computed(() => linkParts(props.text, props.paths))
+const parts = computed(() => linkParts(props.text ?? '', props.paths))
 </script>
 
 <template>
@@ -24,6 +27,11 @@ const parts = computed(() => linkParts(props.text, props.paths))
       v-else-if="'file' in part"
       :to="fileHref(part.file)"
       class="wrap-anywhere underline"
+    >{{ part.text }}</NuxtLink>
+    <NuxtLink
+      v-else-if="'item' in part"
+      :to="itemHref(part.item)"
+      class="font-mono underline"
     >{{ part.text }}</NuxtLink>
     <template v-else>
       {{ part.text }}

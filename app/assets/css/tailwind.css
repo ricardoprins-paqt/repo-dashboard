@@ -151,3 +151,15 @@
     & th { font-weight: 600; background: var(--markdown-tint); }
   }
 }
+
+/* Inbox cards are link targets (/inbox#I-374): land below the sticky header (AppHeader sets --app-header-height), and get the
+   focus ring for a moment when jumped to (app/pages/inbox.vue removes the class again). */
+.inbox-anchor {
+  scroll-margin-top: calc(var(--app-header-height, 5rem) + 1rem);
+  border-radius: var(--pds-radius-md);
+}
+.inbox-anchor-flash {
+  outline: var(--pds-focus-ring);
+  outline-offset: 4px;
+  transition: outline-color 0.6s ease-out;
+}

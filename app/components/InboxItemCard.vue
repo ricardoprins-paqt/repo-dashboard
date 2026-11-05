@@ -42,7 +42,9 @@ function send() {
 
 <template>
   <PDSCard
+    :id="`I-${item.id}`"
     appearance="outlined"
+    class="inbox-anchor"
     :color="item.severity === 'critical' ? 'danger' : undefined"
     :data-testid="`inbox-item-${item.id}`"
   >
@@ -64,12 +66,16 @@ function send() {
           {{ KIND[item.kind]?.label ?? item.kind }}
         </PDSBadge>
         <span class="text-xs text-foreground-muted">
-          <span class="font-mono font-semibold text-foreground">I-{{ item.id }}</span>
+          <a
+            :href="`#I-${item.id}`"
+            class="font-mono font-semibold text-foreground"
+            :title="`Link to this card (I-${item.id})`"
+          >I-{{ item.id }}</a>
           · T-{{ task.id }} {{ task.title }} · session {{ task.session ?? '?' }} · <RelativeTime :at="item.created" />
         </span>
       </div>
       <h3 class="font-semibold">
-        {{ item.title }}
+        <LinkedText :text="item.title" />
       </h3>
       <p
         v-if="item.body"
@@ -123,7 +129,7 @@ function send() {
         v-if="waitingForDelivery"
         class="text-sm text-foreground-muted"
       >
-        You answered: <strong>{{ item.answer }}</strong><template v-if="item.backlog">
+        You answered: <strong><LinkedText :text="item.answer" /></strong><template v-if="item.backlog">
           (add to backlog)
         </template>. Waiting until a session can take it.
       </p>

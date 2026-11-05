@@ -42,6 +42,8 @@ export interface InboxItem {
    * the inbox (hidden everywhere) until he hasn't answered in that chat for a while. Null once it shows.
    */
   held_since?: string | null
+  /** When a held item will show in the inbox; moved by Ricardo's messages in the chat, null while the session works. */
+  held_until?: string | null
   created: string
   updated: string
   /** Added by the dashboard: file paths written in the body that exist, with where they really are (opened on /files). */
@@ -122,4 +124,6 @@ export interface InboxWaitingInChat {
   items: number[]
   /** When the oldest of those items was asked. */
   since: string
+  /** When the first of them shows here if still open (15 minutes after his last message in that chat); null while the session works. */
+  until?: string | null
 }

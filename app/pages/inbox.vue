@@ -297,12 +297,14 @@ const sessions = computed(() => (data.value?.sessions ?? []).map(s => ({ ...s, t
         >
           <template #description>
             <span class="text-sm">
-              Answer there; whatever is still open after 15 minutes without an answer shows up here.
+              Answer there. What is still open shows up here 15 minutes after your last message in that chat.
               <template
                 v-for="(w, i) in waitingInChat"
                 :key="w.session"
               >
-                {{ i ? '·' : '' }} Session {{ w.session }} asked <RelativeTime :at="w.since" />
+                {{ i ? '·' : '' }} Session {{ w.session }} asked <RelativeTime :at="w.since" />,
+                <template v-if="w.until">shows here <RelativeTime :at="w.until" /></template>
+                <template v-else>shows here once it has finished working</template>
               </template>
             </span>
           </template>

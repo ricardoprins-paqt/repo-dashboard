@@ -59,6 +59,10 @@ const confidenceColor = { high: 'success', medium: 'warning', low: 'danger' } as
       >
         <template v-if="busy && !explained">Claude is reading the failing step's log. This takes 20 to 60 seconds…</template>
       </span>
+      <!-- The row's run strip, on the button's line, to the right. -->
+      <div class="ml-auto">
+        <slot />
+      </div>
     </div>
     <p
       v-if="error"

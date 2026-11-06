@@ -12,7 +12,7 @@ const since = computed(() => props.row.failingSince)
 
 <template>
   <li class="flex flex-col gap-3 px-4 py-4">
-    <div class="grid items-start gap-x-6 gap-y-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
+    <div class="grid items-start gap-x-6 gap-y-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
       <div class="flex min-w-0 items-start gap-2">
         <span class="mt-0.5 shrink-0">
           <PDSIcon
@@ -111,17 +111,19 @@ const since = computed(() => props.row.failingSince)
           </template>
         </p>
       </div>
-
-      <CiRunStrip
-        :runs="row.recent"
-        class="lg:justify-end lg:pt-1"
-      />
     </div>
     <CiExplain
       v-if="failedRun"
       :key="failedRun.id"
       :run-id="failedRun.id"
       :explained="explained.includes(failedRun.id)"
+    >
+      <CiRunStrip :runs="row.recent" />
+    </CiExplain>
+    <CiRunStrip
+      v-else
+      :runs="row.recent"
+      class="justify-end"
     />
   </li>
 </template>

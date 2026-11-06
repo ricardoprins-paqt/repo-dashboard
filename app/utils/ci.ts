@@ -69,7 +69,8 @@ export const runStateClass: Record<CiRun['state'], string> = {
   success: 'bg-success',
   failure: 'bg-danger',
   pending: 'bg-warning',
-  none: 'bg-neutral-muted',
+  // Not neutral-muted: in dark mode that is almost the surface colour. A tint of the text colour shows in both themes.
+  none: 'bg-foreground/30',
 }
 
 export const failureKindLabel: Record<CiFailureKind, string> = {

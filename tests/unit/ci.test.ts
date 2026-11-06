@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { CiRun } from '../../shared/types/ci'
 import { buildRows, durationTrend, failingSince, isCiRun, toCiRun, type RawActionsRun } from '../../server/lib/ci'
 import { CiStore } from '../../server/lib/ci-store'
-import { durationTrend as trendLabel, elapsed, formatDuration } from '../../app/utils/ci'
+import { durationTrend as trendLabel, elapsed, formatDuration, formatRunTime } from '../../app/utils/ci'
 
 let nextId = 1
 function run(state: 'success' | 'failure' | 'pending' | 'cancelled', createdAt: string, extra: Partial<CiRun> = {}): CiRun {
@@ -115,6 +115,14 @@ describe('page formatting', () => {
     expect(formatDuration(1500)).toBe('25 min')
     expect(formatDuration(3900)).toBe('1 h 5 min')
     expect(formatDuration(null)).toBe('–')
+  })
+
+  it('says when a run started', () => {
+    const now = new Date(2026, 10, 6, 15, 0)
+    expect(formatRunTime(new Date(2026, 10, 6, 11, 31).toISOString(), now)).toBe('11:31 today')
+    expect(formatRunTime(new Date(2026, 10, 5, 9, 5).toISOString(), now)).toBe('09:05 yesterday')
+    expect(formatRunTime(new Date(2026, 7, 6, 11, 31).toISOString(), now)).toBe('11:31 on 6 Aug')
+    expect(formatRunTime(new Date(2025, 11, 6, 11, 31).toISOString(), now)).toBe('11:31 on 6 Dec 2025')
   })
 
   it('says how long', () => {

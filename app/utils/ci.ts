@@ -11,6 +11,17 @@ export function formatDuration(seconds: number | null | undefined): string {
   return `${Math.floor(minutes / 60)} h ${minutes % 60} min`
 }
 
+/** When a run started, in the viewer's time zone: "11:31 today", "11:31 yesterday", "11:31 on 6 Nov", "11:31 on 6 Nov 2025". */
+export function formatRunTime(iso: string, now: Date = new Date()): string {
+  const date = new Date(iso)
+  const time = date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
+  const day = (d: Date) => d.toDateString()
+  if (day(date) === day(now)) return `${time} today`
+  if (day(date) === day(new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1))) return `${time} yesterday`
+  const sameYear = date.getFullYear() === now.getFullYear()
+  return `${time} on ${date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', ...(sameYear ? {} : { year: 'numeric' }) })}`
+}
+
 /** How long ago, without "ago": "12 days", "5 hours", "20 minutes". */
 export function elapsed(iso: string, now: number = Date.now()): string {
   const seconds = Math.max(0, Math.round((now - Date.parse(iso)) / 1000))

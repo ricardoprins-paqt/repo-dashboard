@@ -58,12 +58,12 @@ const since = computed(() => props.row.failingSince)
               target="_blank"
               rel="noopener"
               class="underline underline-offset-2"
-            >Last run</a>:
+            >Last run</a> at {{ formatRunTime(row.last.createdAt) }} (<RelativeTime :at="row.last.createdAt" />):
             <template v-if="row.running">
-              running since <RelativeTime :at="row.last.startedAt" />
+              running
             </template>
             <template v-else>
-              {{ (row.last.conclusion ?? row.last.status).replace('_', ' ') }} <RelativeTime :at="row.last.createdAt" /><template v-if="row.last.durationS !== null">
+              {{ (row.last.conclusion ?? row.last.status).replace('_', ' ') }}<template v-if="row.last.durationS !== null">
                 in {{ formatDuration(row.last.durationS) }}
               </template>
             </template>

@@ -53,3 +53,20 @@ test('explains a failed run, marked as AI', async ({ page }) => {
   await expect(panel).toContainText('Code change')
   await expect(panel).toContainText('medium confidence')
 })
+
+test('keeps an opened explanation open after a reload', async ({ page }) => {
+  await page.goto('/ci')
+  await page.getByRole('button', { name: 'Why did this fail?' }).click()
+  const panel = page.getByRole('region', { name: 'AI explanation of run 13' })
+  await expect(panel).toBeVisible()
+
+  // After the click the server knows the run is explained.
+  await page.route('**/api/ci', route => route.fulfill({ json: { ...ciOverviewFixture, explained: [13] } }))
+  await page.reload()
+  await expect(panel).toContainText('The new test runner no longer finds the setup file.')
+
+  await page.getByRole('button', { name: 'Hide explanation' }).click()
+  await page.reload()
+  await expect(page.getByRole('button', { name: 'Show AI explanation' })).toBeVisible()
+  await expect(panel).toHaveCount(0)
+})

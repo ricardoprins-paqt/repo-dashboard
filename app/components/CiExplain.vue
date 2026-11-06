@@ -3,7 +3,8 @@ import type { CiExplanation } from '#shared/types/ci'
 
 /**
  * "Why did this fail?" for one failed run. Asking takes 20-60 s (Claude reads the failing step's log); the answer is stored per
- * run, so the next click, here or in another tab, shows it at once.
+ * run, so the next click, here or in another tab, shows it at once. An opened explanation stays open after a reload (the run ids
+ * are remembered in this browser); a newer failed run is another id, so its row starts closed again.
  */
 const props = defineProps<{ runId: number, explained: boolean }>()
 
@@ -11,6 +12,35 @@ const explanation = ref<CiExplanation | null>(null)
 const busy = ref(false)
 const open = ref(false)
 const error = ref<string | null>(null)
+
+const OPEN_KEY = 'repo-dashboard:ci-open-explanations'
+const KEEP = 200
+
+function openIds(): number[] {
+  try {
+    const ids = JSON.parse(localStorage.getItem(OPEN_KEY) ?? '[]') as unknown
+    return Array.isArray(ids) ? ids.filter((id): id is number => typeof id === 'number') : []
+  }
+  catch {
+    return []
+  }
+}
+
+function rememberOpen(isOpen: boolean) {
+  try {
+    const ids = openIds().filter(id => id !== props.runId)
+    if (isOpen) ids.push(props.runId)
+    localStorage.setItem(OPEN_KEY, JSON.stringify(ids.slice(-KEEP)))
+  }
+  catch {
+    // No storage (private window): it simply does not stay open after a reload.
+  }
+}
+
+watch(open, rememberOpen)
+onMounted(() => {
+  if (props.explained && openIds().includes(props.runId)) void ask()
+})
 
 async function ask() {
   if (explanation.value) {

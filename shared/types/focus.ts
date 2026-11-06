@@ -48,6 +48,8 @@ export interface SummariesResponse {
   available: boolean
   error?: string
   summaries: Summary[]
+  /** When Ricardo last pressed "Write a summary" (the assistant then writes one now), or null. */
+  requested_at?: string | null
 }
 
 export type PrChecks = 'success' | 'failure' | 'pending' | 'none'

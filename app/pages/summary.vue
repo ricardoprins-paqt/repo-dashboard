@@ -4,8 +4,40 @@ import type { SummariesResponse } from '#shared/types/focus'
 useHead({ title: 'FYI summary · Repo Dashboard' })
 
 /** The daily FYI summaries: FYIs no longer show in the inbox; the assistant writes them up once a day. */
-const { data } = await useFetch<SummariesResponse>('/api/summaries')
+const { data, refresh } = await useFetch<SummariesResponse>('/api/summaries')
 const summaries = computed(() => (data.value?.summaries ?? []).map(s => ({ ...s, html: renderMarkdown(s.content) })))
+
+// "Write a summary" (in the header's menu): the assistant writes one now. Pending until a summary newer than the request exists.
+const requesting = ref(false)
+const requestError = ref<string | null>(null)
+const pending = computed(() => {
+  const at = data.value?.requested_at
+  if (!at) return false
+  return !(data.value?.summaries ?? []).some(s => s.created > at)
+})
+const menuItems = computed(() => [{ id: 'write-summary', label: requesting.value ? 'Asking the assistant…' : 'Write a summary', icon: 'lucide:file-pen-line', disabled: requesting.value }])
+async function onMenu(id: string) {
+  if (id !== 'write-summary') return
+  requesting.value = true
+  requestError.value = null
+  try {
+    await $fetch('/api/summaries/request', { method: 'POST', headers: { 'X-LSS-Action': '1' } })
+    await refresh()
+  }
+  catch (e) {
+    requestError.value = (e as { statusMessage?: string }).statusMessage ?? (e as Error).message
+  }
+  finally {
+    requesting.value = false
+  }
+}
+// While a summary is being written, look again every 20 seconds.
+let timer: ReturnType<typeof setInterval> | undefined
+watch(pending, (p) => {
+  clearInterval(timer)
+  if (p) timer = setInterval(() => void refresh(), 20000)
+}, { immediate: true })
+onBeforeUnmount(() => clearInterval(timer))
 </script>
 
 <template>
@@ -14,7 +46,11 @@ const summaries = computed(() => (data.value?.summaries ?? []).map(s => ({ ...s,
       class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-2 focus:z-10 focus:bg-black focus:p-3 focus:text-white"
       href="#main-content"
     >Skip to content</a>
-    <AppHeader title="FYI summary">
+    <AppHeader
+      title="FYI summary"
+      :items="menuItems"
+      @select="onMenu"
+    >
       <template #subtitle>
         One summary a day of what you should know, written by the assistant
       </template>
@@ -23,6 +59,20 @@ const summaries = computed(() => (data.value?.summaries ?? []).map(s => ({ ...s,
       id="main-content"
       class="mx-auto flex w-full max-w-[60rem] flex-col gap-6 px-4 py-8 sm:px-8"
     >
+      <p
+        v-if="pending"
+        role="status"
+        class="text-sm text-foreground-muted"
+      >
+        The assistant is writing a summary (asked <RelativeTime :at="data?.requested_at" />); it shows here when it's ready.
+      </p>
+      <p
+        v-if="requestError"
+        role="alert"
+        class="text-danger-text"
+      >
+        Could not ask the assistant: {{ requestError }}
+      </p>
       <p
         v-if="data && !data.available"
         role="alert"

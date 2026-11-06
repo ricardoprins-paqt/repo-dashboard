@@ -105,7 +105,7 @@ const { data, error } = useCiData<CiRepoDetail>(() => `/api/ci/repos/${encodeURI
                 class="font-semibold underline-offset-4 hover:underline"
               >{{ run.workflow }}</a>
               <span :class="run.state === 'failure' ? 'text-danger-text' : 'text-foreground-muted'">{{ (run.state === 'pending' ? run.status : run.conclusion ?? run.status).replace('_', ' ') }}</span>
-              <span class="text-xs text-foreground-muted">at {{ formatRunTime(run.createdAt) }} (<RelativeTime :at="run.createdAt" />) · {{ formatDuration(run.durationS) }} · {{ run.event }}</span>
+              <span class="text-xs text-foreground-muted">at {{ formatRunTime(run.createdAt) }} · <RelativeTime :at="run.createdAt" /> · {{ formatDuration(run.durationS) }} · {{ run.event }}</span>
             </div>
             <p class="wrap-anywhere pl-5 text-xs text-foreground-muted">
               <span class="font-mono">{{ run.sha.slice(0, 7) }}</span> {{ run.title }} · {{ run.author }}

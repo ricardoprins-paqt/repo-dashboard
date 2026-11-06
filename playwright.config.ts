@@ -18,7 +18,8 @@ export default defineConfig({
   webServer: {
     command: 'node .output/server/index.mjs',
     url: 'http://127.0.0.1:3179',
-    env: { NITRO_HOST: '127.0.0.1', NITRO_PORT: '3179' },
+    // No hourly CI sync (it would call GitHub) and no CI history on disk.
+    env: { NITRO_HOST: '127.0.0.1', NITRO_PORT: '3179', REPO_DASHBOARD_CI_SYNC: '0', REPO_DASHBOARD_CI_DB: ':memory:' },
     reuseExistingServer: false,
     timeout: 120_000,
   },

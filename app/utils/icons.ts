@@ -6,12 +6,16 @@ import lucide from '@iconify-json/lucide/icons.json'
  */
 export const APP_ICONS = [
   'circle-check',
+  'circle-minus',
   'circle-x',
   'cloud-download',
   'git-branch',
   'info',
+  'loader-circle',
+  'lock',
   'moon',
   'refresh-cw',
+  'sparkles',
   'sun',
   'triangle-alert',
 ] as const

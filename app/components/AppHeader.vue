@@ -18,8 +18,12 @@ const route = useRoute()
 const PAGES = [
   { to: '/inbox', label: 'Inbox' },
   { to: '/', label: 'Repositories' },
+  { to: '/ci', label: 'CI' },
   { to: '/lab', label: 'Lab loop' },
 ]
+
+/** /ci/<repo> belongs to the CI page. */
+const isCurrent = (to: string) => route.path === to || (to !== '/' && route.path.startsWith(`${to}/`))
 
 const menuItems = computed<DropdownMenuItem[]>(() => [
   ...props.items,
@@ -91,7 +95,7 @@ function onSelect(event: CustomEvent<{ id: string, checked?: boolean }>) {
             :key="page.to"
             :to="page.to"
             class="text-sm underline-offset-4 hover:underline"
-            :class="route.path === page.to ? 'font-semibold underline' : 'text-foreground-muted'"
+            :class="isCurrent(page.to) ? 'font-semibold underline' : 'text-foreground-muted'"
             :aria-current="route.path === page.to ? 'page' : undefined"
           >
             {{ page.label }}

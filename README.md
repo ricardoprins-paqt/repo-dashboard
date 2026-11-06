@@ -74,6 +74,9 @@ pnpm repos --json               # everything, machine readable
 | `server/lib/files.ts`, `server/api/files/` | The `/files?path=` page: a file or folder under `~/workspace` (Markdown formatted, images and PDFs shown, folders with an image gallery) |
 | `server/lib/inbox-files.ts`, `app/utils/links.ts` | Inbox items: file anchors and paths in the text that exist become links to `/files`, URLs become links |
 | `scripts/repos-status.ts` | The terminal view |
+| `server/lib/ci-sync.ts`, `server/plugins/ci-sync.ts` | The CI page's hourly sync of GitHub Actions runs (`/api/ci`, `POST /api/ci` = refresh now) |
+| `server/lib/ci-store.ts`, `server/lib/ci.ts` | The CI history in SQLite, and the rows built from it (failing since, last 30 runs, duration trend) |
+| `server/lib/ci-explain.ts` | "Why did this fail?": trimmed log, workflow file and commit, secrets stripped, asked to `claude -p` without tools |
 
 The page paints local git state first (well under a second) and fills in GitHub data when it arrives. It refreshes itself every minute while the tab is visible, unless you turn off *Auto-refresh*.
 
@@ -92,6 +95,26 @@ Components: cards (`PDSCard`), buttons, badges, tabs, slideover, input, select a
 `PDSCard` has no click support, so each card (and summary tile) contains a native `<button>` stretched over the whole card with an `after:absolute after:inset-0` pseudo-element. The card is then one click target and one tab stop, and the repo name stays a real heading.
 
 Icons: `app/plugins/icons.client.ts` registers a bundled Lucide subset (listed in `app/utils/icons.ts`) so `PDSIcon` does not call the Iconify API. It uses `iconify-icon` directly, because importing PDS's `registerIconCollection` defines `<pds-icon>` first, which already starts the remote lookups.
+
+## CI
+
+`/ci` shows the GitHub Actions runs on the default branch of every repository in an organisation (`paqtcom`, or
+`REPO_DASHBOARD_CI_ORG`) that has any: one row per repository and workflow, red first (the longest red at the top), with when
+it turned red and by which commit, the last 30 runs and the average duration with its trend. `/ci/<repo>` lists a repository's
+recent runs. Pull request runs and Dependabot's update jobs are left out; repositories the `gh` login cannot read are listed
+as "No access".
+
+The page reads only the dashboard's own history: a SQLite file (`~/.local/state/repo-dashboard/ci.sqlite`, or
+`REPO_DASHBOARD_CI_DB`) that a sync fills every hour, and on *Refresh now* in the menu. The sync calls GitHub with the
+machine's `gh` login (the token never reaches the browser), about one call per repository: more pages only on the first sync
+or when more than 30 runs happened in an hour, and repositories without runs only once a day or after a push. It skips a
+round when fewer than 1000 calls are left in the hour. `REPO_DASHBOARD_CI_SYNC=0` turns the sync off (the e2e tests).
+
+**Why did this fail?** on a failed run collects the failing jobs' log (only the failing step, around the error), the
+workflow file at that commit, the commit's message and changed files and the workflow's earlier runs, strips anything that
+looks like a token, password or key, and asks the local Claude Code CLI: `claude -p --tools ""` with no MCP servers and no
+settings, in an empty folder, so it has no file or shell access. The answer (what failed, likely cause, kind, fix, how sure)
+is shown as an AI explanation and stored per run, so a second click is instant. It only runs on a click.
 
 ## Files
 

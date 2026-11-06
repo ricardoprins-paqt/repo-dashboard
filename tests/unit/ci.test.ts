@@ -129,3 +129,14 @@ describe('page formatting', () => {
     expect(trendLabel({ avgDurationS: 100, previousAvgDurationS: null })).toBeNull()
   })
 })
+
+describe('CiStore.forgetArchived', () => {
+  it('hides an archived repo but keeps its runs', () => {
+    const store = new CiStore(':memory:')
+    store.saveRepo({ name: 'app', defaultBranch: 'main', url: '', access: 'ok', error: null, pushedAt: null, hasRuns: true, checkedAt: null })
+    store.upsertRuns([run('success', '2026-11-01', { id: 500 })])
+    store.forgetArchived(['app'])
+    expect(store.repo('app')).toBeNull()
+    expect(store.run(500)).not.toBeNull()
+  })
+})

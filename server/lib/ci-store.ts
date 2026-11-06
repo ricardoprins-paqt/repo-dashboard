@@ -203,14 +203,10 @@ export class CiStore {
     return (this.db.prepare('SELECT * FROM repos ORDER BY name').all() as unknown as RepoRow[]).map(toRepo)
   }
 
-  /** Repos that left the org or were archived: their runs no longer show. */
-  removeReposExcept(names: string[]) {
-    const keep = new Set(names)
-    for (const repo of this.repos()) {
-      if (keep.has(repo.name)) continue
-      this.db.prepare('DELETE FROM repos WHERE name = ?').run(repo.name)
-      this.db.prepare('DELETE FROM runs WHERE repo = ?').run(repo.name)
-    }
+  /** Archived repos leave the page; their runs stay in the history (and show again if the repo is unarchived). */
+  forgetArchived(names: string[]) {
+    const remove = this.db.prepare('DELETE FROM repos WHERE name = ?')
+    for (const name of names) remove.run(name)
   }
 
   explanation(runId: number): CiExplanation | null {

@@ -24,6 +24,15 @@ export class GhError extends Error {
   }
 }
 
+/**
+ * The machine's own `gh` login, which has SSO access to the organisation. A GITHUB_TOKEN or GH_TOKEN in the server's environment
+ * (for installing packages, say) would win over it in gh and usually sees only the public repos.
+ */
+function ghEnv(): NodeJS.ProcessEnv {
+  const { GITHUB_TOKEN: _github, GH_TOKEN: _gh, ...env } = process.env
+  return { ...env, GH_PROMPT_DISABLED: '1', GH_NO_UPDATE_NOTIFIER: '1', NO_COLOR: '1' }
+}
+
 /** `gh api <path>` with the machine's own login. The token stays in gh; nothing here sees it. */
 export async function ghApi<T>(path: string, options: { raw?: boolean, accept?: string, escapes?: boolean } = {}): Promise<T> {
   const args = ['api', path]
@@ -34,7 +43,7 @@ export async function ghApi<T>(path: string, options: { raw?: boolean, accept?: 
     const { stdout } = await execFileAsync('gh', args, {
       timeout: 60_000,
       maxBuffer: 64 * 1024 * 1024,
-      env: { ...process.env, GH_PROMPT_DISABLED: '1', GH_NO_UPDATE_NOTIFIER: '1', NO_COLOR: '1' },
+      env: ghEnv(),
     })
     return (options.raw ? stdout : JSON.parse(stdout)) as T
   }
@@ -158,7 +167,12 @@ async function runSync(store: CiStore) {
     if (list.length < 100) break
   }
   const active = all.filter(repo => !repo.archived)
-  store.removeReposExcept(active.map(repo => repo.name))
+  store.forgetArchived(all.filter(repo => repo.archived).map(repo => repo.name))
+  // A repo that is no longer listed keeps its history: a login that suddenly sees less must not wipe it.
+  const listed = new Set(active.map(repo => repo.name))
+  for (const repo of store.repos().filter(repo => !listed.has(repo.name) && repo.access === 'ok')) {
+    store.saveRepo({ ...repo, access: 'none', error: 'No longer listed in the organisation for this login', checkedAt: new Date().toISOString() })
+  }
 
   runtime.total = active.length
   runtime.done = 0

@@ -7,6 +7,8 @@ const props = defineProps<{
   busy: boolean
   /** The task's session runs a loop with a backlog (the lab PO): offer "add to backlog" instead of doing it now. */
   canBacklog?: boolean
+  /** The focus card this item belongs to, if any. */
+  cardTitle?: string | null
 }>()
 const emit = defineEmits<{
   answer: [answer: string, backlog: boolean]
@@ -71,7 +73,12 @@ function send() {
             class="font-mono font-semibold text-foreground"
             :title="`Link to this card (I-${item.id})`"
           >I-{{ item.id }}</a>
-          · T-{{ task.id }} {{ task.title }} · session {{ task.session ?? '?' }} · <RelativeTime :at="item.created" />
+          · T-{{ task.id }} {{ task.title }} · session {{ task.session ?? '?' }} · <RelativeTime :at="item.created" /><template v-if="cardTitle">
+            · card: <NuxtLink
+              to="/focus"
+              class="underline"
+            >{{ cardTitle }}</NuxtLink>
+          </template>
         </span>
       </div>
       <h3 class="font-semibold">

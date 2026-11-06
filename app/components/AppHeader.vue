@@ -16,6 +16,7 @@ const { theme, toggle: toggleTheme } = useTheme()
 const route = useRoute()
 
 const PAGES = [
+  { to: '/focus', label: 'Focus' },
   { to: '/inbox', label: 'Inbox' },
   { to: '/', label: 'Repositories' },
   { to: '/ci', label: 'CI' },

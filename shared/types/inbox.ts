@@ -44,6 +44,8 @@ export interface InboxItem {
   held_since?: string | null
   /** When a held item will show in the inbox; moved by Ricardo's messages in the chat, null while the session works. */
   held_until?: string | null
+  /** The focus card (Ricardo's own, /focus) this item belongs to, or null. Items of focused cards show first in the inbox. */
+  card_id?: number | null
   created: string
   updated: string
   /** Added by the dashboard: file paths written in the body that exist, with where they really are (opened on /files). */
@@ -115,6 +117,8 @@ export interface InboxOverview {
   reserved: number[]
   /** Sessions with items held in their chat (see InboxItem.held_since), by session number. */
   waitingInChat?: InboxWaitingInChat[]
+  /** Ricardo's focus cards (id, title, focused or parked), so the inbox can show the items of focused cards first. */
+  cards?: InboxCardRef[]
   generatedAt: string
 }
 
@@ -127,3 +131,13 @@ export interface InboxWaitingInChat {
   /** When the first of them shows here if still open (15 minutes after his last message in that chat); null while the session works. */
   until?: string | null
 }
+
+/** A focus card as the inbox overview names it. */
+export interface InboxCardRef {
+  id: number
+  title: string
+  status: CardStatus
+}
+
+/** focused: what Ricardo works on now (its items show in the inbox). parked: "don't forget this", out of the way. */
+export type CardStatus = 'focused' | 'parked'

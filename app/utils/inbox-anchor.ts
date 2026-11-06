@@ -9,7 +9,7 @@ export function itemFromHash(hash: string | null | undefined): number | null {
 /** Where an item is relative to the "Needs you" list: on it, hidden by the type filter, or not on it (and why). */
 export type ItemPlace
   = | { place: 'shown' | 'filtered', item: InboxItem, task: InboxTask }
-    | { place: 'held' | 'answered' | 'snoozed' | 'closed', item: InboxItem, task: InboxTask }
+    | { place: 'held' | 'answered' | 'snoozed' | 'closed' | 'fyi', item: InboxItem, task: InboxTask }
     | { place: 'missing' }
 
 export function locateItem(tasks: InboxTask[], id: number, shownKinds: ReadonlySet<ItemKind>): ItemPlace {
@@ -17,6 +17,8 @@ export function locateItem(tasks: InboxTask[], id: number, shownKinds: ReadonlyS
     const item = task.items.find(i => i.id === id)
     if (!item) continue
     if (item.held_since) return { place: 'held', item, task }
+    // FYIs are in the daily summary (/summary), not in the inbox; a critical one still shows.
+    if (item.needs_you && item.kind === 'fyi' && item.severity !== 'critical') return { place: 'fyi', item, task }
     if (item.needs_you) return { place: shownKinds.has(item.kind) ? 'shown' : 'filtered', item, task }
     if (item.status === 'answered' || item.status === 'delivered') return { place: 'answered', item, task }
     if (item.status === 'snoozed') return { place: 'snoozed', item, task }
@@ -32,6 +34,8 @@ export function placeNotice(id: number, found: ItemPlace): string | null {
     case 'shown':
     case 'filtered':
       return null
+    case 'fyi':
+      return `I-${id} is an FYI: FYIs are in the daily summary (FYI summary page), not in the inbox.`
     case 'held':
       return `I-${id} is waiting for you in session ${session ?? '?'}'s chat; it shows here if you don't answer there.`
     case 'answered':

@@ -62,7 +62,8 @@ describe('jumping to a card', () => {
   it('finds where an item is and says why it has no card', () => {
     const tasks = [task([
       item({ id: 1 }),
-      item({ id: 2, kind: 'fyi' }),
+      item({ id: 2, kind: 'review' }),
+      item({ id: 6, kind: 'fyi' }),
       item({ id: 3, needs_you: false, held_since: '2026-11-05T10:00:00Z' }),
       item({ id: 4, needs_you: false, status: 'done', note: 'merged' }),
       item({ id: 5, needs_you: false, status: 'delivered', delivered_to: 9 }),
@@ -74,5 +75,6 @@ describe('jumping to a card', () => {
     expect(placeNotice(5, locateItem(tasks, 5, all))).toBe('I-5 is answered and your answer went to session 9.')
     expect(placeNotice(99, locateItem(tasks, 99, all))).toContain('not in the inbox any more')
     expect(placeNotice(1, locateItem(tasks, 1, all))).toBeNull()
+    expect(placeNotice(6, locateItem(tasks, 6, all))).toContain('daily summary')
   })
 })

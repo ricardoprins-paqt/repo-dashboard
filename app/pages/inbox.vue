@@ -73,7 +73,17 @@ const waitingLine = computed(() => {
   return `Sessions ${n.slice(0, -1).join(', ')} and ${n.at(-1)} are waiting for you in their chat`
 })
 
-// Filters (which kinds) and sorting for "Needs you", remembered in this browser.
+// Focus: the default view shows the items of focused cards (Ricardo's /focus page) and critical items; items of parked cards and
+// items on no card are folded under "Not now". FYIs are in the daily summary (/summary), not here.
+const cards = computed(() => data.value?.cards ?? [])
+const focusSplit = computed(() => splitByFocus(allNeedsYou.value, cards.value))
+const hiddenFyis = computed(() => allNeedsYou.value.filter(({ item }) => hiddenAsFyi(item)).length)
+const hasFocusedCards = computed(() => cards.value.some(c => c.status === 'focused'))
+const notNowOpen = ref(false)
+const cardTitle = (id: number | null | undefined) => (id == null ? null : cards.value.find(c => c.id === id)?.title ?? null)
+
+// Filters (which kinds) and sorting for "Needs you", remembered in this browser. FYIs have no button: they are not shown here.
+const KINDS = INBOX_KINDS.filter(k => k.kind !== 'fyi')
 const PREFS_KEY = 'repo-dashboard:inbox'
 const shownKinds = ref<Set<ItemKind>>(new Set(INBOX_KINDS.map(k => k.kind)))
 const sort = ref<InboxSort>('kind')
@@ -101,12 +111,16 @@ watch([shownKinds, sort], () => {
 }, { deep: true })
 // Click: only this kind (again: all). Cmd/ctrl-click: add or remove it.
 function clickKind(kind: ItemKind, event: MouseEvent) {
-  shownKinds.value = nextKinds(shownKinds.value, kind, event.metaKey || event.ctrlKey, INBOX_KINDS.map(k => k.kind))
+  const next = nextKinds(shownKinds.value, kind, event.metaKey || event.ctrlKey, KINDS.map(k => k.kind))
+  next.add('fyi') // a critical FYI (something broken) always stays visible
+  shownKinds.value = next
 }
-const allShown = computed(() => shownKinds.value.size === INBOX_KINDS.length)
-const kindCount = (kind: ItemKind) => allNeedsYou.value.filter(({ item }) => item.kind === kind).length
-const needsYou = computed(() => needsYouList(allNeedsYou.value, shownKinds.value, sort.value))
-const hiddenCount = computed(() => allNeedsYou.value.length - needsYou.value.length)
+const allShown = computed(() => KINDS.every(k => shownKinds.value.has(k.kind)))
+const visible = computed(() => [...focusSplit.value.now, ...focusSplit.value.notNow])
+const kindCount = (kind: ItemKind) => visible.value.filter(({ item }) => item.kind === kind).length
+const needsYou = computed(() => needsYouList(focusSplit.value.now, shownKinds.value, sort.value))
+const notNow = computed(() => needsYouList(focusSplit.value.notNow, shownKinds.value, sort.value))
+const hiddenCount = computed(() => visible.value.length - needsYou.value.length - notNow.value.length)
 const snoozed = computed(() => tasks.value.flatMap(t => t.items).filter(i => i.status === 'snoozed' && i.snooze_until && Date.parse(i.snooze_until) > Date.now()).length)
 
 // Links to a card (/inbox#I-374, from item text, handoffs, other pages): after the data is there, scroll it into view below
@@ -124,6 +138,7 @@ async function goToItem(hash: string) {
   }
   anchorNotice.value = placeNotice(id, found)
   if (found.place !== 'shown') return
+  if (focusSplit.value.notNow.some(e => e.item.id === id)) notNowOpen.value = true
   await nextTick()
   const card = document.getElementById(`I-${id}`)
   if (!card) return
@@ -179,7 +194,7 @@ const sessions = computed(() => (data.value?.sessions ?? []).map(s => ({ ...s, t
       @select="checkNow"
     >
       <template #subtitle>
-        {{ allNeedsYou.length }} need you · {{ openTasks.length }} open tasks<template v-if="snoozed">
+        {{ focusSplit.now.length }} need you now · {{ focusSplit.notNow.length }} not now · {{ openTasks.length }} open tasks<template v-if="snoozed">
           · {{ snoozed }} snoozed
         </template>
       </template>
@@ -271,7 +286,7 @@ const sessions = computed(() => (data.value?.sessions ?? []).map(s => ({ ...s, t
           aria-label="Show these kinds"
         >
           <PDSButton
-            v-for="k in INBOX_KINDS"
+            v-for="k in KINDS"
             :key="k.kind"
             size="sm"
             :appearance="shownKinds.has(k.kind) ? undefined : 'outlined'"
@@ -317,11 +332,30 @@ const sessions = computed(() => (data.value?.sessions ?? []).map(s => ({ ...s, t
         >
           {{ anchorNotice }}
         </p>
+        <p class="flex flex-wrap gap-x-4 gap-y-1 text-sm text-foreground-muted">
+          <span>Showing the items of your <NuxtLink
+            to="/focus"
+            class="underline"
+          >focused cards</NuxtLink> and anything critical.</span>
+          <NuxtLink
+            to="/summary"
+            class="underline"
+          >FYIs: today's summary<template v-if="hiddenFyis"> ({{ hiddenFyis }} not summarised yet)</template></NuxtLink>
+        </p>
+        <p
+          v-if="!hasFocusedCards"
+          class="text-sm text-foreground-muted"
+        >
+          You have no focused cards yet, so only critical items show here and the rest is under "Not now". Add what you work on now on the <NuxtLink
+            to="/focus"
+            class="underline"
+          >Focus page</NuxtLink>.
+        </p>
         <p
           v-if="!needsYou.length"
           class="text-sm text-foreground-muted"
         >
-          {{ allNeedsYou.length ? `Nothing to show: ${hiddenCount} hidden by the filters above.` : 'Nothing needs you right now.' }}
+          {{ hiddenCount ? `Nothing to show here: ${hiddenCount} hidden by the filters above.` : 'Nothing for your focused cards right now.' }}
         </p>
         <p
           v-if="needsYou.length && hiddenCount"
@@ -342,12 +376,40 @@ const sessions = computed(() => (data.value?.sessions ?? []).map(s => ({ ...s, t
               :task="task"
               :busy="busy"
               :can-backlog="canBacklog(task)"
+              :card-title="cardTitle(item.card_id)"
               @answer="(answer: string, backlog: boolean) => act({ action: 'answer', id: item.id, answer, backlog })"
               @close="act({ action: 'close', id: item.id })"
               @snooze="act({ action: 'snooze', id: item.id, until: tomorrow() })"
             />
           </li>
         </ul>
+        <details
+          v-if="notNow.length"
+          :open="notNowOpen"
+          data-testid="not-now"
+          @toggle="(e: Event) => (notNowOpen = (e.target as HTMLDetailsElement).open)"
+        >
+          <summary class="cursor-pointer font-semibold">
+            Not now ({{ notNow.length }}) <span class="text-sm font-normal text-foreground-muted">· items of parked cards and items on no card; nothing is closed</span>
+          </summary>
+          <ul class="mt-3 grid gap-3 lg:grid-cols-2">
+            <li
+              v-for="{ item, task } in notNow"
+              :key="item.id"
+            >
+              <InboxItemCard
+                :item="item"
+                :task="task"
+                :busy="busy"
+                :can-backlog="canBacklog(task)"
+                :card-title="cardTitle(item.card_id)"
+                @answer="(answer: string, backlog: boolean) => act({ action: 'answer', id: item.id, answer, backlog })"
+                @close="act({ action: 'close', id: item.id })"
+                @snooze="act({ action: 'snooze', id: item.id, until: tomorrow() })"
+              />
+            </li>
+          </ul>
+        </details>
       </section>
 
       <section

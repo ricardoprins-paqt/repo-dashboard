@@ -91,7 +91,7 @@ function goWithRecommendation() {
       <PDSTextarea
         v-model="typed"
         :rows="3"
-        label="Your answer"
+        aria-label="Your answer"
         placeholder="Write your answer, or add to the option you chose"
       />
       <div class="flex justify-end">

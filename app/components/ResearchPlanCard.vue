@@ -72,7 +72,8 @@ function decide() {
         <PDSTextarea
           v-model="comment"
           :rows="2"
-          label="Comment (optional)"
+          aria-label="Comment on this plan"
+          placeholder="Comment (optional)"
         />
         <p
           v-if="noBudget"

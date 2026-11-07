@@ -88,12 +88,13 @@ function goWithRecommendation() {
           Go with the recommendation
         </PDSButton>
       </div>
-      <PDSTextarea
-        v-model="typed"
-        :rows="3"
-        aria-label="Your answer"
-        placeholder="Write your answer, or add to the option you chose"
-      />
+      <PDSFormField label="Your answer">
+        <PDSTextarea
+          v-model="typed"
+          :rows="3"
+          placeholder="Write your answer, or add to the option you chose"
+        />
+      </PDSFormField>
       <div class="flex justify-end">
         <PDSButton
           type="submit"

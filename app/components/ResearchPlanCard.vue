@@ -69,12 +69,13 @@ function decide() {
         <!-- eslint-enable vue/no-v-html -->
       </details>
       <template v-if="!plan.decision || stale">
-        <PDSTextarea
-          v-model="comment"
-          :rows="2"
-          aria-label="Comment on this plan"
-          placeholder="Comment (optional)"
-        />
+        <PDSFormField label="Comment (optional)">
+          <PDSTextarea
+            v-model="comment"
+            :rows="2"
+            placeholder="Why you approve or reject it"
+          />
+        </PDSFormField>
         <p
           v-if="noBudget"
           class="text-sm text-danger-text"

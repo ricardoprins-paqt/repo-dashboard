@@ -52,6 +52,26 @@ export interface SummariesResponse {
   requested_at?: string | null
 }
 
+/** What we achieved on one day: the assistant writes it at 18:00 and adds to it at midnight. */
+export interface Achievement {
+  id: number
+  date: string
+  /** Markdown: the 3-5 goals of the day, with links. */
+  highlights: string
+  /** Markdown one-liners: everything done that day. */
+  items: string[]
+  /** Everything up to this moment is in it; a later run only adds what came after. */
+  covered_until: string
+  created: string
+  updated: string
+}
+
+export interface AchievementsResponse {
+  available: boolean
+  error?: string
+  achievements: Achievement[]
+}
+
 export type PrChecks = 'success' | 'failure' | 'pending' | 'none'
 
 /** An open, non-draft PR in one of Ricardo's repos that waits for a human. */

@@ -1,19 +1,30 @@
 <script setup lang="ts">
-import type { SummariesResponse } from '#shared/types/focus'
+import { PDSExpCollapsible } from '@paqtdesign/experimental/vue'
+import type { AchievementsResponse, SummariesResponse } from '#shared/types/focus'
 
-useHead({ title: 'FYI summary · Repo Dashboard' })
+useHead({ title: 'Daily summary · Repo Dashboard' })
 
-/** The daily FYI summaries: FYIs no longer show in the inbox; the assistant writes them up once a day. */
-const { data, refresh } = await useFetch<SummariesResponse>('/api/summaries')
-const summaries = computed(() => (data.value?.summaries ?? []).map(s => ({ ...s, html: renderMarkdown(s.content) })))
+/**
+ * The daily summary: what we achieved (the assistant writes it at 18:00 and adds to it at midnight: highlights, plus every
+ * single thing folded away) and the FYI summaries ("Good to know"; FYIs no longer show in the inbox).
+ */
+const { data, refresh: refreshSummaries } = await useFetch<SummariesResponse>('/api/summaries')
+const { data: achieved, refresh: refreshAchievements } = await useFetch<AchievementsResponse>('/api/achievements')
+const refresh = () => Promise.all([refreshSummaries(), refreshAchievements()])
+const days = computed(() => summaryDays(achieved.value?.achievements ?? [], data.value?.summaries ?? []).map(d => ({
+  ...d,
+  highlightsHtml: d.achievement ? renderMarkdown(d.achievement.highlights) : '',
+  itemHtml: (d.achievement?.items ?? []).map(i => renderMarkdown(i)),
+  fyis: d.fyis.map(f => ({ ...f, html: renderMarkdown(f.content) })),
+})))
+const dayTitle = (date: string) => new Date(`${date}T12:00:00`).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })
+const timeOf = (iso: string) => new Date(iso).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
 
 // "Write a summary" (in the header's menu): the assistant writes one now. Pending until a summary newer than the request exists.
 const requesting = ref(false)
 const requestError = ref<string | null>(null)
 const pending = computed(() => {
-  const at = data.value?.requested_at
-  if (!at) return false
-  return !(data.value?.summaries ?? []).some(s => s.created > at)
+  return summaryPending(data.value?.requested_at, data.value?.summaries ?? [], achieved.value?.achievements ?? [])
 })
 const menuItems = computed(() => [{ id: 'write-summary', label: requesting.value ? 'Asking the assistant…' : 'Write a summary', icon: 'lucide:file-pen-line', disabled: requesting.value }])
 async function onMenu(id: string) {
@@ -47,12 +58,12 @@ onBeforeUnmount(() => clearInterval(timer))
       href="#main-content"
     >Skip to content</a>
     <AppHeader
-      title="FYI summary"
+      title="Daily summary"
       :items="menuItems"
       @select="onMenu"
     >
       <template #subtitle>
-        One summary a day of what you should know, written by the assistant
+        What we achieved, and what you should know
       </template>
     </AppHeader>
     <main
@@ -81,32 +92,77 @@ onBeforeUnmount(() => clearInterval(timer))
         {{ data.error }}
       </p>
       <p
-        v-else-if="!summaries.length"
+        v-else-if="!days.length"
         class="text-sm text-foreground-muted"
       >
-        No summary yet. The assistant writes one a day.
+        No summary yet. The assistant writes one at 18:00 and adds to it at midnight.
       </p>
       <article
-        v-for="s in summaries"
-        :id="`summary-${s.date}`"
-        :key="s.id"
-        class="flex flex-col gap-2"
+        v-for="d in days"
+        :id="`summary-${d.date}`"
+        :key="d.date"
+        class="flex flex-col gap-4"
       >
         <h2 class="text-lg font-semibold">
-          {{ new Date(s.date).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }) }}
+          {{ dayTitle(d.date) }}
         </h2>
-        <!-- eslint-disable vue/no-v-html -- markdown-it with html: false escapes all raw HTML (app/utils/markdown.ts) -->
-        <div
-          class="markdown text-sm"
-          v-html="s.html"
-        />
-        <!-- eslint-enable vue/no-v-html -->
-        <p
-          v-if="s.items.length"
-          class="text-xs text-foreground-muted"
+        <section
+          v-if="d.achievement"
+          class="flex flex-col gap-2"
+          :aria-label="`What we achieved on ${dayTitle(d.date)}`"
         >
-          <LinkedText :text="`Covers ${s.items.map(i => `I-${i}`).join(', ')}.`" />
-        </p>
+          <h3 class="text-sm font-semibold">
+            What we achieved
+          </h3>
+          <!-- eslint-disable vue/no-v-html -- markdown-it with html: false escapes all raw HTML (app/utils/markdown.ts) -->
+          <div
+            class="markdown text-sm"
+            v-html="d.highlightsHtml"
+          />
+          <PDSExpCollapsible
+            v-if="d.itemHtml.length"
+            :label="`Everything done that day (${d.itemHtml.length})`"
+          >
+            <ul class="markdown flex list-disc flex-col gap-1 pl-5 pt-2 text-sm">
+              <li
+                v-for="(html, i) in d.itemHtml"
+                :key="i"
+                v-html="html"
+              />
+            </ul>
+          </PDSExpCollapsible>
+          <!-- eslint-enable vue/no-v-html -->
+          <p class="text-xs text-foreground-muted">
+            Covers until {{ timeOf(d.achievement.covered_until) }}
+          </p>
+        </section>
+        <section
+          v-if="d.fyis.length"
+          class="flex flex-col gap-2"
+          :aria-label="`Good to know on ${dayTitle(d.date)}`"
+        >
+          <h3 class="text-sm font-semibold">
+            Good to know
+          </h3>
+          <div
+            v-for="f in d.fyis"
+            :key="f.id"
+            class="flex flex-col gap-1"
+          >
+            <!-- eslint-disable vue/no-v-html -- markdown-it with html: false escapes all raw HTML (app/utils/markdown.ts) -->
+            <div
+              class="markdown text-sm"
+              v-html="f.html"
+            />
+            <!-- eslint-enable vue/no-v-html -->
+            <p
+              v-if="f.items.length"
+              class="text-xs text-foreground-muted"
+            >
+              <LinkedText :text="`Covers ${f.items.map(i => `I-${i}`).join(', ')}.`" />
+            </p>
+          </div>
+        </section>
       </article>
     </main>
   </div>

@@ -18,6 +18,7 @@ const route = useRoute()
 const PAGES = [
   { to: '/focus', label: 'Focus' },
   { to: '/inbox', label: 'Inbox' },
+  { to: '/summary', label: 'Summary' },
   { to: '/', label: 'Repositories' },
   { to: '/ci', label: 'CI' },
   { to: '/lab', label: 'Lab loop' },

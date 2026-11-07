@@ -21,6 +21,7 @@ const PAGES = [
   { to: '/', label: 'Repositories' },
   { to: '/ci', label: 'CI' },
   { to: '/lab', label: 'Lab loop' },
+  { to: '/research', label: 'Research' },
 ]
 
 /** /ci/<repo> belongs to the CI page. */

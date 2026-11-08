@@ -98,11 +98,11 @@ onBeforeUnmount(() => clearInterval(timer))
         No summary yet. The assistant writes one at 18:00 and adds to it at midnight.
       </p>
       <article
-        v-for="(d, i) in days"
+        v-for="(d, dayIndex) in days"
         :id="`summary-${d.date}`"
         :key="d.date"
         class="flex flex-col gap-8"
-        :class="i ? 'border-t border-border pt-12' : ''"
+        :class="dayIndex ? 'border-t border-border pt-12' : ''"
       >
         <h2 class="text-2xl font-semibold tracking-[-0.01em]">
           {{ dayTitle(d.date) }}

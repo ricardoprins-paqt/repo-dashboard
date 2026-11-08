@@ -202,7 +202,7 @@ const sessions = computed(() => (data.value?.sessions ?? []).map(s => ({ ...s, t
 
     <main
       id="main-content"
-      class="mx-auto flex w-full max-w-[84rem] flex-col gap-8 px-4 py-8 sm:px-8"
+      class="mx-auto flex w-full max-w-[84rem] flex-col gap-12 px-4 py-8 sm:px-8"
     >
       <p
         v-if="checked"
@@ -219,18 +219,21 @@ const sessions = computed(() => (data.value?.sessions ?? []).map(s => ({ ...s, t
         {{ actionError ?? data?.error ?? error?.message }}
       </p>
 
-      <section aria-labelledby="sessions-heading">
+      <section
+        aria-labelledby="sessions-heading"
+        class="flex flex-col gap-4"
+      >
         <h2
           id="sessions-heading"
-          class="mb-3 text-lg font-semibold"
+          class="section-title"
         >
           Sessions
         </h2>
-        <ul class="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
+        <ul class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
           <li
             v-for="s in sessions"
             :key="s.n"
-            class="flex flex-col gap-1 rounded border border-border bg-surface p-3 text-sm"
+            class="flex flex-col gap-1 rounded-surface border border-border bg-surface p-3 text-sm"
           >
             <div class="flex items-center justify-between gap-2">
               <span class="font-semibold">{{ s.n }}</span>
@@ -263,12 +266,12 @@ const sessions = computed(() => (data.value?.sessions ?? []).map(s => ({ ...s, t
 
       <section
         aria-labelledby="needs-heading"
-        class="flex flex-col gap-3"
+        class="flex flex-col gap-4"
       >
         <div class="flex flex-wrap items-center justify-between gap-3">
           <h2
             id="needs-heading"
-            class="text-lg font-semibold"
+            class="section-title"
           >
             Needs you
           </h2>
@@ -414,11 +417,11 @@ const sessions = computed(() => (data.value?.sessions ?? []).map(s => ({ ...s, t
 
       <section
         aria-labelledby="tasks-heading"
-        class="flex flex-col gap-3"
+        class="flex flex-col gap-4"
       >
         <h2
           id="tasks-heading"
-          class="text-lg font-semibold"
+          class="section-title"
         >
           Tasks
         </h2>

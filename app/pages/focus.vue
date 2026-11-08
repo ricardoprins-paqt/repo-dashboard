@@ -128,7 +128,7 @@ const unavailable = computed(() => [cardsData.value, reposData.value].find(d => 
 
     <main
       id="main-content"
-      class="mx-auto flex w-full max-w-[84rem] flex-col gap-8 px-4 py-8 sm:px-8"
+      class="mx-auto flex w-full max-w-[84rem] flex-col gap-12 px-4 py-8 sm:px-8"
     >
       <p
         v-if="unavailable || actionError"
@@ -140,11 +140,11 @@ const unavailable = computed(() => [cardsData.value, reposData.value].find(d => 
 
       <section
         aria-labelledby="focused-heading"
-        class="flex flex-col gap-3"
+        class="flex flex-col gap-4"
       >
         <h2
           id="focused-heading"
-          class="text-lg font-semibold"
+          class="section-title"
         >
           Focused
         </h2>
@@ -221,7 +221,7 @@ const unavailable = computed(() => [cardsData.value, reposData.value].find(d => 
         v-if="parked.length"
         class="flex flex-col gap-3"
       >
-        <summary class="cursor-pointer text-lg font-semibold">
+        <summary class="section-title cursor-pointer">
           Parked ({{ parked.length }})
         </summary>
         <ul class="mt-3 grid gap-3 lg:grid-cols-2">
@@ -247,12 +247,12 @@ const unavailable = computed(() => [cardsData.value, reposData.value].find(d => 
 
       <section
         aria-labelledby="prs-heading"
-        class="flex flex-col gap-3"
+        class="flex flex-col gap-4"
       >
         <div class="flex flex-wrap items-center justify-between gap-3">
           <h2
             id="prs-heading"
-            class="text-lg font-semibold"
+            class="section-title"
           >
             PRs waiting for you
           </h2>
@@ -328,11 +328,11 @@ const unavailable = computed(() => [cardsData.value, reposData.value].find(d => 
 
       <section
         aria-labelledby="repos-heading"
-        class="flex flex-col gap-2"
+        class="flex flex-col gap-4"
       >
         <h2
           id="repos-heading"
-          class="text-lg font-semibold"
+          class="section-title"
         >
           Repos whose PRs show here
         </h2>

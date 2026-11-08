@@ -33,7 +33,7 @@ const toneClass = {
     <div class="flex flex-col items-start gap-1">
       <button
         type="button"
-        class="text-left text-xs font-semibold uppercase tracking-wide text-foreground-muted outline-none after:absolute after:inset-0 after:content-['']"
+        class="text-left eyebrow outline-none after:absolute after:inset-0 after:content-['']"
         :aria-pressed="active"
         @click="$emit('select')"
       >

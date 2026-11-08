@@ -23,7 +23,7 @@ const { data, error } = useCiData<CiRepoDetail>(() => `/api/ci/repos/${encodeURI
         </template>
       </template>
     </AppHeader>
-    <main class="mx-auto flex w-full max-w-[84rem] flex-col gap-8 px-4 py-8 sm:px-8">
+    <main class="mx-auto flex w-full max-w-[84rem] flex-col gap-12 px-4 py-8 sm:px-8">
       <p class="text-sm">
         <NuxtLink
           to="/ci"
@@ -47,11 +47,11 @@ const { data, error } = useCiData<CiRepoDetail>(() => `/api/ci/repos/${encodeURI
       <section
         v-if="data?.rows.length"
         aria-labelledby="ci-workflows-heading"
-        class="flex flex-col gap-3"
+        class="flex flex-col gap-4"
       >
         <h2
           id="ci-workflows-heading"
-          class="text-lg font-semibold"
+          class="section-title"
         >
           Workflows
         </h2>
@@ -69,11 +69,11 @@ const { data, error } = useCiData<CiRepoDetail>(() => `/api/ci/repos/${encodeURI
       <section
         v-if="data"
         aria-labelledby="ci-runs-heading"
-        class="flex flex-col gap-3"
+        class="flex flex-col gap-4"
       >
         <h2
           id="ci-runs-heading"
-          class="text-lg font-semibold"
+          class="section-title"
         >
           Recent runs on {{ data.repo.defaultBranch }} <span class="text-sm font-normal text-foreground-muted">({{ data.runs.length }})</span>
         </h2>

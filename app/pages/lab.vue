@@ -138,7 +138,7 @@ const time = (iso: string) => new Date(iso).toLocaleString('en-GB', { weekday: '
 
     <main
       id="main-content"
-      class="mx-auto flex w-full max-w-[84rem] flex-col gap-8 px-4 py-8 sm:px-8"
+      class="mx-auto flex w-full max-w-[84rem] flex-col gap-12 px-4 py-8 sm:px-8"
     >
       <p
         v-if="notice"
@@ -175,7 +175,7 @@ const time = (iso: string) => new Date(iso).toLocaleString('en-GB', { weekday: '
           <div class="grid grid-cols-2 gap-3 md:grid-cols-4">
             <PDSCard appearance="outlined">
               <div class="flex flex-col gap-1">
-                <span class="text-xs font-semibold uppercase tracking-wide text-foreground-muted">Now</span>
+                <span class="eyebrow">Now</span>
                 <span
                   class="truncate text-xl font-semibold"
                   data-testid="lab-now"
@@ -188,7 +188,7 @@ const time = (iso: string) => new Date(iso).toLocaleString('en-GB', { weekday: '
               data-testid="lab-loop"
             >
               <div class="flex flex-col gap-1">
-                <span class="text-xs font-semibold uppercase tracking-wide text-foreground-muted">Loop</span>
+                <span class="eyebrow">Loop</span>
                 <span
                   class="text-xl font-semibold"
                   :class="loop?.display === 'paused' || loop?.display === 'held' ? 'text-warning-text' : loop?.display === 'broken' ? 'text-danger-text' : ''"
@@ -256,14 +256,14 @@ const time = (iso: string) => new Date(iso).toLocaleString('en-GB', { weekday: '
             </PDSCard>
             <PDSCard appearance="outlined">
               <div class="flex flex-col gap-1">
-                <span class="text-xs font-semibold uppercase tracking-wide text-foreground-muted">In lab/main</span>
+                <span class="eyebrow">In lab/main</span>
                 <span class="text-3xl font-semibold leading-none tabular-nums">{{ inLabMain }}</span>
                 <span class="text-xs text-foreground-muted">{{ fun.experiments.length }} experiments in total</span>
               </div>
             </PDSCard>
             <PDSCard appearance="outlined">
               <div class="flex flex-col gap-1">
-                <span class="text-xs font-semibold uppercase tracking-wide text-foreground-muted">Ideas ready</span>
+                <span class="eyebrow">Ideas ready</span>
                 <span class="text-3xl font-semibold leading-none tabular-nums">{{ readyIdeas }}</span>
                 <span class="text-xs text-foreground-muted">research {{ fun.lastResearchAt ? relativeTime(fun.lastResearchAt) : 'not run yet' }}</span>
               </div>
@@ -286,11 +286,11 @@ const time = (iso: string) => new Date(iso).toLocaleString('en-GB', { weekday: '
           v-for="[repo, experiments] in byRepo"
           :key="repo"
           :aria-labelledby="`repo-${repo}`"
-          class="flex flex-col gap-3"
+          class="flex flex-col gap-4"
         >
           <h2
             :id="`repo-${repo}`"
-            class="text-lg font-semibold"
+            class="section-title"
           >
             {{ repo }}
           </h2>
@@ -377,11 +377,11 @@ const time = (iso: string) => new Date(iso).toLocaleString('en-GB', { weekday: '
         <section
           v-if="fun.proposals.length"
           aria-labelledby="proposals-heading"
-          class="flex flex-col gap-3"
+          class="flex flex-col gap-4"
         >
           <h2
             id="proposals-heading"
-            class="text-lg font-semibold"
+            class="section-title"
           >
             Proposals
           </h2>
@@ -427,11 +427,11 @@ const time = (iso: string) => new Date(iso).toLocaleString('en-GB', { weekday: '
 
         <section
           aria-labelledby="ideas-heading"
-          class="flex flex-col gap-3"
+          class="flex flex-col gap-4"
         >
           <h2
             id="ideas-heading"
-            class="text-lg font-semibold"
+            class="section-title"
           >
             Backlog
           </h2>
@@ -482,11 +482,11 @@ const time = (iso: string) => new Date(iso).toLocaleString('en-GB', { weekday: '
         <div class="grid gap-8 lg:grid-cols-2">
           <section
             aria-labelledby="runs-heading"
-            class="flex flex-col gap-3"
+            class="flex flex-col gap-4"
           >
             <h2
               id="runs-heading"
-              class="text-lg font-semibold"
+              class="section-title"
             >
               What the product owner did
             </h2>
@@ -515,11 +515,11 @@ const time = (iso: string) => new Date(iso).toLocaleString('en-GB', { weekday: '
           </section>
           <section
             aria-labelledby="ticks-heading"
-            class="flex flex-col gap-3"
+            class="flex flex-col gap-4"
           >
             <h2
               id="ticks-heading"
-              class="text-lg font-semibold"
+              class="section-title"
             >
               Ticks
             </h2>

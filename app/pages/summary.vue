@@ -68,7 +68,7 @@ onBeforeUnmount(() => clearInterval(timer))
     </AppHeader>
     <main
       id="main-content"
-      class="mx-auto flex w-full max-w-[60rem] flex-col gap-6 px-4 py-8 sm:px-8"
+      class="mx-auto flex w-full max-w-[60rem] flex-col gap-12 px-4 py-8 sm:px-8"
     >
       <p
         v-if="pending"
@@ -103,12 +103,12 @@ onBeforeUnmount(() => clearInterval(timer))
         :key="d.date"
         class="flex flex-col gap-4"
       >
-        <h2 class="text-lg font-semibold">
+        <h2 class="section-title">
           {{ dayTitle(d.date) }}
         </h2>
         <section
           v-if="d.achievement"
-          class="flex flex-col gap-2"
+          class="flex flex-col gap-4"
           :aria-label="`What we achieved on ${dayTitle(d.date)}`"
         >
           <h3 class="text-sm font-semibold">
@@ -138,7 +138,7 @@ onBeforeUnmount(() => clearInterval(timer))
         </section>
         <section
           v-if="d.fyis.length"
-          class="flex flex-col gap-2"
+          class="flex flex-col gap-4"
           :aria-label="`Good to know on ${dayTitle(d.date)}`"
         >
           <h3 class="text-sm font-semibold">

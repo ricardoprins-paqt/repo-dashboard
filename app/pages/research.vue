@@ -65,7 +65,7 @@ async function acceptFence() {
     </AppHeader>
     <main
       id="main-content"
-      class="mx-auto flex w-full max-w-[60rem] flex-col gap-8 px-4 py-8 sm:px-8"
+      class="mx-auto flex w-full max-w-[60rem] flex-col gap-12 px-4 py-8 sm:px-8"
     >
       <p class="text-sm text-foreground-muted">
         The research loop talks to you here, not in your inbox.
@@ -130,11 +130,11 @@ async function acceptFence() {
 
       <section
         aria-labelledby="now-heading"
-        class="flex flex-col gap-3"
+        class="flex flex-col gap-4"
       >
         <h2
           id="now-heading"
-          class="text-lg font-semibold"
+          class="section-title"
         >
           Now
         </h2>
@@ -215,11 +215,11 @@ async function acceptFence() {
 
       <section
         aria-labelledby="questions-heading"
-        class="flex flex-col gap-3"
+        class="flex flex-col gap-4"
       >
         <h2
           id="questions-heading"
-          class="text-lg font-semibold"
+          class="section-title"
         >
           Questions
         </h2>
@@ -260,12 +260,12 @@ async function acceptFence() {
 
       <section
         aria-labelledby="plans-heading"
-        class="flex flex-col gap-3"
+        class="flex flex-col gap-4"
       >
         <div class="flex flex-wrap items-baseline justify-between gap-2">
           <h2
             id="plans-heading"
-            class="text-lg font-semibold"
+            class="section-title"
           >
             Run plans
           </h2>

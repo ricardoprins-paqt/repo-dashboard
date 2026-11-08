@@ -95,7 +95,7 @@ function setFilter(next: RepoFilter) {
 
     <main
       id="main-content"
-      class="mx-auto flex w-full max-w-[84rem] flex-col gap-8 px-4 py-8 sm:px-8"
+      class="mx-auto flex w-full max-w-[84rem] flex-col gap-12 px-4 py-8 sm:px-8"
     >
       <!-- Persistent state (the data may be stale), so a callout rather than a toast. -->
       <PDSExpCallout
@@ -257,7 +257,7 @@ function setFilter(next: RepoFilter) {
         <div class="flex flex-wrap items-end justify-between gap-4">
           <h2
             id="repos-heading"
-            class="text-lg font-semibold"
+            class="section-title"
           >
             Repositories <span class="text-sm font-normal text-foreground-muted">({{ repos.length }}<template v-if="overview && repos.length !== overview.repos.length"> of {{ overview.repos.length }}</template>)</span>
           </h2>

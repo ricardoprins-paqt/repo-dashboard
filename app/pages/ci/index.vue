@@ -49,7 +49,7 @@ function setFilter(next: CiFilter) {
 
     <main
       id="main-content"
-      class="mx-auto flex w-full max-w-[84rem] flex-col gap-8 px-4 py-8 sm:px-8"
+      class="mx-auto flex w-full max-w-[84rem] flex-col gap-12 px-4 py-8 sm:px-8"
     >
       <p
         v-if="error"
@@ -118,7 +118,7 @@ function setFilter(next: CiFilter) {
         <div class="flex flex-wrap items-end justify-between gap-4">
           <h2
             id="ci-rows-heading"
-            class="text-lg font-semibold"
+            class="section-title"
           >
             Workflows <span class="text-sm font-normal text-foreground-muted">({{ rows.length }}<template v-if="data && rows.length !== data.rows.length"> of {{ data.rows.length }}</template>) · red first, the longest red at the top</span>
           </h2>
@@ -159,7 +159,7 @@ function setFilter(next: CiFilter) {
       <section
         v-if="data?.noAccess.length"
         aria-labelledby="ci-no-access-heading"
-        class="flex flex-col gap-2"
+        class="flex flex-col gap-4"
       >
         <h2
           id="ci-no-access-heading"

@@ -197,7 +197,8 @@ function sessionHint(s: SessionTile) {
 }
 // The session's own name repeats its number ("6 - I-516 pr261 review"): show only the part after it.
 function sessionTitle(s: SessionTile) {
-  const title = s.task?.title || s.name?.replace(new RegExp(`^${s.n}\\s*-\\s*`), '') || ''
+  const own = s.task?.title && s.task.title !== 'Untitled task' ? s.task.title : ''
+  const title = own || s.name?.replace(new RegExp(`^${s.n}\\s*-\\s*`), '') || ''
   return title || 'No task yet'
 }
 </script>

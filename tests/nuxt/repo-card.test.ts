@@ -20,7 +20,7 @@ describe('RepoCard', () => {
       expect(text).toContain('feature/login')
       expect(text).toContain('↑2')
       expect(text).toContain('2 changed')
-      expect(text).toContain('1 PR')
+      expect(text).toContain('1 open PR')
       expect(text).toContain('CI failing')
       expect(text).toContain('CI is failing on develop')
       expect(text).toContain('1 worktree')

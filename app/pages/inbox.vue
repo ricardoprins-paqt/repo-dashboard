@@ -179,6 +179,27 @@ const canBacklog = (task: InboxTask) => data.value?.sessions.some(s => s.n === t
 // Session strip: what each session is on now.
 // Session strip: what each session is on now. Reserved, pinned, loop and free come from the status service.
 const sessions = computed(() => (data.value?.sessions ?? []).map(s => ({ ...s, task: tasks.value.find(t => t.id === s.task_id) })))
+
+// Session tiles: plain words for the session's state (the status service's terms are reserved/loop/pinned/free).
+type SessionTile = { n: number, status: string, reserved?: boolean | undefined, loop?: boolean | undefined, pinned?: boolean | undefined, free?: boolean | undefined, name?: string | null | undefined, task?: { title?: string | null | undefined } | null | undefined }
+function sessionLabel(s: SessionTile) {
+  if (s.status === 'busy') return 'Working'
+  if (s.reserved || s.loop) return 'Fixed role'
+  if (s.pinned) return 'Kept for you'
+  if (s.free) return 'Free'
+  return s.status === 'not running' ? 'Not running' : 'Idle'
+}
+function sessionHint(s: SessionTile) {
+  if (s.reserved || s.loop) return 'Has a fixed role (like the product owner or the assistant); never handed other work'
+  if (s.pinned) return 'Kept for your own work; the inbox does not hand it other work'
+  if (s.free) return 'Free: the inbox may hand it a waiting task'
+  return ''
+}
+// The session's own name repeats its number ("6 - I-516 pr261 review"): show only the part after it.
+function sessionTitle(s: SessionTile) {
+  const title = s.task?.title || s.name?.replace(new RegExp(`^${s.n}\\s*-\\s*`), '') || ''
+  return title || 'No task yet'
+}
 </script>
 
 <template>
@@ -229,20 +250,24 @@ const sessions = computed(() => (data.value?.sessions ?? []).map(s => ({ ...s, t
         >
           Sessions
         </h2>
+        <p class="-mt-2 text-sm text-foreground-muted">
+          New work goes to a free session. Sessions kept for you or with a fixed role are never handed other work.
+        </p>
         <ul class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
           <li
             v-for="s in sessions"
             :key="s.n"
             class="flex flex-col gap-1 rounded-surface border border-border bg-surface p-3 text-sm"
           >
-            <div class="flex items-center justify-between gap-2">
-              <span class="font-semibold">{{ s.n }}</span>
+            <div class="flex items-baseline justify-between gap-2">
+              <span class="font-semibold">Session {{ s.n }}</span>
               <span
                 class="text-xs"
                 :class="s.status === 'busy' ? 'text-info-text' : s.free ? 'text-success-text' : 'text-foreground-muted'"
-              >{{ s.status === 'busy' ? 'busy' : s.reserved ? 'reserved' : s.loop ? 'loop' : s.pinned ? 'yours' : s.free ? 'free' : s.status }}</span>
+                :title="sessionHint(s)"
+              >{{ sessionLabel(s) }}</span>
             </div>
-            <span class="line-clamp-2 text-xs text-foreground-muted"><LinkedText :text="s.task?.title ?? s.name ?? 'No task'" /></span>
+            <span class="line-clamp-2 text-xs text-foreground-muted"><LinkedText :text="sessionTitle(s)" /></span>
             <span
               v-for="a in s.activity"
               :key="a.kind"
@@ -256,9 +281,10 @@ const sessions = computed(() => (data.value?.sessions ?? []).map(s => ({ ...s, t
               class="self-start text-xs underline"
               :disabled="busy"
               :aria-pressed="s.pinned"
+              :title="s.pinned ? 'Let the inbox hand this session other work again' : 'Keep this session for your own work: the inbox will not hand it other work'"
               @click="act({ action: 'pin', session: s.n, pinned: !s.pinned })"
             >
-              {{ s.pinned ? 'Unpin' : 'Pin as mine' }}
+              {{ s.pinned ? 'Release for other work' : 'Keep for me' }}
             </button>
           </li>
         </ul>

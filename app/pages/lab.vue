@@ -37,6 +37,8 @@ const STATUS: Record<ExperimentStatus, { label: string, color?: 'success' | 'war
   'outside-lab-main': { label: 'Not in lab/main' },
 }
 
+const PROPOSAL_STATUS: Record<string, string> = { proposed: 'Proposed', accepted: 'Accepted', rejected: 'Rejected', open: 'Open' }
+
 const KIND: Record<IdeaKind, string> = { 'feature': 'Feature', 'ai-dx': 'AI / DX', 'gap': 'Competitor gap', 'challenge': 'Proposal' }
 
 const fun = computed(() => data.value)
@@ -304,19 +306,10 @@ const time = (iso: string) => new Date(iso).toLocaleString('en-GB', { weekday: '
                 appearance="outlined"
                 class="h-full"
               >
-                <div class="flex h-full flex-col gap-2">
-                  <div class="flex items-start justify-between gap-2">
-                    <h3 class="font-semibold">
-                      {{ e.name }}
-                    </h3>
-                    <span class="flex shrink-0 gap-1">
-                      <PDSBadge
-                        v-if="e.kind && e.kind !== 'feature'"
-                        size="sm"
-                        appearance="subtle"
-                      >
-                        {{ KIND[e.kind] }}
-                      </PDSBadge>
+                <div class="flex h-full flex-col gap-3">
+                  <!-- Status first, on its own line, so the title gets the full width. -->
+                  <div class="flex flex-col gap-1.5">
+                    <span class="flex flex-wrap gap-1.5">
                       <PDSBadge
                         size="sm"
                         appearance="subtle"
@@ -324,18 +317,28 @@ const time = (iso: string) => new Date(iso).toLocaleString('en-GB', { weekday: '
                       >
                         {{ STATUS[e.status]?.label ?? e.status }}
                       </PDSBadge>
+                      <PDSBadge
+                        v-if="e.kind && e.kind !== 'feature' && KIND[e.kind]"
+                        size="sm"
+                        appearance="subtle"
+                      >
+                        {{ KIND[e.kind] }}
+                      </PDSBadge>
                     </span>
+                    <h3 class="text-base font-semibold text-balance">
+                      {{ e.name }}
+                    </h3>
+                    <p class="text-sm">
+                      {{ e.description }}
+                    </p>
                   </div>
-                  <p class="text-sm">
-                    {{ e.description }}
-                  </p>
                   <p
                     v-if="e.note"
                     class="text-xs text-foreground-muted"
                   >
                     {{ e.note }}
                   </p>
-                  <div class="mt-auto flex flex-wrap items-center gap-x-4 gap-y-1 pt-1 text-sm">
+                  <div class="mt-auto flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
                     <a
                       v-if="e.previewUrl"
                       :href="e.previewUrl"
@@ -359,7 +362,7 @@ const time = (iso: string) => new Date(iso).toLocaleString('en-GB', { weekday: '
                         size="14"
                       />PR #{{ e.pr }}
                     </a>
-                    <span class="ml-auto font-mono text-xs text-foreground-muted">{{ e.branch }}</span>
+                    <span class="ml-auto min-w-0 truncate font-mono text-xs text-foreground-muted">{{ e.branch }}</span>
                   </div>
                   <ExperimentReview
                     v-if="e.inLabMain && e.status !== 'liked'"
@@ -395,18 +398,18 @@ const time = (iso: string) => new Date(iso).toLocaleString('en-GB', { weekday: '
                 class="h-full"
               >
                 <div class="flex h-full flex-col gap-2">
-                  <div class="flex items-start justify-between gap-2">
-                    <h3 class="font-semibold">
-                      {{ p.title }}
-                    </h3>
+                  <span class="flex">
                     <PDSBadge
                       size="sm"
                       appearance="subtle"
                       :color="p.status === 'accepted' ? 'success' : p.status === 'rejected' ? 'danger' : 'info'"
                     >
-                      {{ p.status }}
+                      {{ PROPOSAL_STATUS[p.status] ?? p.status }}
                     </PDSBadge>
-                  </div>
+                  </span>
+                  <h3 class="text-base font-semibold text-balance">
+                    {{ p.title }}
+                  </h3>
                   <p
                     v-if="p.recommendation"
                     class="text-sm"

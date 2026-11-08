@@ -6,7 +6,7 @@ useHead({ title: 'Daily summary · Repo Dashboard' })
 
 /**
  * The daily summary: what we achieved (the assistant writes it at 18:00 and adds to it at midnight: highlights, plus every
- * single thing folded away) and the FYI summaries ("Good to know"; FYIs no longer show in the inbox).
+ * single thing folded away) and the FYI summaries (FYIs no longer show in the inbox). One big heading per day, smaller ones per part.
  */
 const { data, refresh: refreshSummaries } = await useFetch<SummariesResponse>('/api/summaries')
 const { data: achieved, refresh: refreshAchievements } = await useFetch<AchievementsResponse>('/api/achievements')
@@ -15,7 +15,7 @@ const days = computed(() => summaryDays(achieved.value?.achievements ?? [], data
   ...d,
   highlightsHtml: d.achievement ? renderMarkdown(d.achievement.highlights) : '',
   itemHtml: (d.achievement?.items ?? []).map(i => renderMarkdown(i)),
-  fyis: d.fyis.map(f => ({ ...f, html: renderMarkdown(f.content) })),
+  fyis: d.fyis.map(f => ({ ...f, html: renderMarkdown(withoutLeadingH1(f.content)) })),
 })))
 const dayTitle = (date: string) => new Date(`${date}T12:00:00`).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })
 const timeOf = (iso: string) => new Date(iso).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
@@ -98,12 +98,13 @@ onBeforeUnmount(() => clearInterval(timer))
         No summary yet. The assistant writes one at 18:00 and adds to it at midnight.
       </p>
       <article
-        v-for="d in days"
+        v-for="(d, i) in days"
         :id="`summary-${d.date}`"
         :key="d.date"
-        class="flex flex-col gap-4"
+        class="flex flex-col gap-8"
+        :class="i ? 'border-t border-border pt-12' : ''"
       >
-        <h2 class="section-title">
+        <h2 class="text-2xl font-semibold tracking-[-0.01em]">
           {{ dayTitle(d.date) }}
         </h2>
         <section
@@ -111,12 +112,12 @@ onBeforeUnmount(() => clearInterval(timer))
           class="flex flex-col gap-4"
           :aria-label="`What we achieved on ${dayTitle(d.date)}`"
         >
-          <h3 class="text-sm font-semibold">
+          <h3 class="section-title">
             What we achieved
           </h3>
           <!-- eslint-disable vue/no-v-html -- markdown-it with html: false escapes all raw HTML (app/utils/markdown.ts) -->
           <div
-            class="markdown text-sm"
+            class="markdown markdown-nested text-sm"
             v-html="d.highlightsHtml"
           />
           <PDSExpCollapsible
@@ -139,10 +140,10 @@ onBeforeUnmount(() => clearInterval(timer))
         <section
           v-if="d.fyis.length"
           class="flex flex-col gap-4"
-          :aria-label="`Good to know on ${dayTitle(d.date)}`"
+          :aria-label="`FYI summary of ${dayTitle(d.date)}`"
         >
-          <h3 class="text-sm font-semibold">
-            Good to know
+          <h3 class="section-title">
+            FYI summary
           </h3>
           <div
             v-for="f in d.fyis"
@@ -151,7 +152,7 @@ onBeforeUnmount(() => clearInterval(timer))
           >
             <!-- eslint-disable vue/no-v-html -- markdown-it with html: false escapes all raw HTML (app/utils/markdown.ts) -->
             <div
-              class="markdown text-sm"
+              class="markdown markdown-nested text-sm"
               v-html="f.html"
             />
             <!-- eslint-enable vue/no-v-html -->

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { Achievement, Summary } from '../../shared/types/focus'
-import { summaryDays, summaryPending } from '../../app/utils/summary'
+import { summaryDays, summaryPending, withoutLeadingH1 } from '../../app/utils/summary'
 
 const ach = (date: string, updated: string, id = 1): Achievement => ({ id, date, highlights: '- a', items: ['x'], covered_until: updated, created: updated, updated })
 const fyi = (date: string, created: string, id = 1): Summary => ({ id, date, content: '- y', items: [], created })
@@ -24,5 +24,16 @@ describe('summaryPending', () => {
     expect(summaryPending(at, [fyi('2026-11-07', '2026-11-07T17:00:00Z')], [ach('2026-11-07', '2026-11-07T18:00:00Z')])).toBe(true)
     expect(summaryPending(at, [fyi('2026-11-07', '2026-11-07T20:05:00Z')], [])).toBe(false)
     expect(summaryPending(at, [], [ach('2026-11-07', '2026-11-07T20:05:00Z')])).toBe(false)
+  })
+})
+
+describe('withoutLeadingH1', () => {
+  it('drops a leading level-1 heading, so the page section titles stay on top', () => {
+    expect(withoutLeadingH1('# FYI summary, 7 Nov 2026\n\n- merged #12\n')).toBe('- merged #12\n')
+    expect(withoutLeadingH1('  # Title\n- a')).toBe('- a')
+  })
+  it('keeps everything else', () => {
+    expect(withoutLeadingH1('- a\n# not leading')).toBe('- a\n# not leading')
+    expect(withoutLeadingH1('## A subheading\n- a')).toBe('## A subheading\n- a')
   })
 })

@@ -28,3 +28,8 @@ export function summaryPending(requestedAt: string | null | undefined, summaries
   if (!requestedAt) return false
   return !summaries.some(s => s.created > requestedAt) && !achievements.some(a => a.updated > requestedAt)
 }
+
+/** Summary text without a leading level-1 heading: the page gives each part its own title (older summaries started with "# FYI summary, …"). */
+export function withoutLeadingH1(markdown: string): string {
+  return markdown.replace(/^\s*#\s+[^\n]*\n+/, '')
+}

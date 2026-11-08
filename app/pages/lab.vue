@@ -91,7 +91,7 @@ const nowHint = computed(() => {
   const parts = []
   if (f.worker?.startedAt) parts.push(`started ${relativeTime(f.worker.startedAt)}`)
   if (f.research?.startedAt) parts.push(`research running since ${relativeTime(f.research.startedAt)}`)
-  return parts.join(' · ') || 'no worker running'
+  return parts.join(' · ') || 'Nothing is being built'
 })
 // The loop's state comes from the status service (the loop state machine); the page only shows it and sends pause/resume.
 const { data: loop, refresh: refreshLoop } = await useFetch<LabLoopView | null>('/api/lab-loop')
@@ -132,8 +132,8 @@ const time = (iso: string) => new Date(iso).toLocaleString('en-GB', { weekday: '
       @select="onMenu"
     >
       <template #subtitle>
-        Session {{ fun?.session }} · {{ everyLabel }}<template v-if="fun?.pinnedAt">
-          · develop pinned {{ fun.pinnedAt }}
+        Runs in session {{ fun?.session }}, {{ everyLabel }}<template v-if="fun?.pinnedAt">
+          · builds on develop as of {{ fun.pinnedAt }}
         </template>
       </template>
     </AppHeader>
@@ -260,19 +260,19 @@ const time = (iso: string) => new Date(iso).toLocaleString('en-GB', { weekday: '
               <div class="flex flex-col gap-1">
                 <span class="eyebrow">In lab/main</span>
                 <span class="text-3xl font-semibold leading-none tabular-nums">{{ inLabMain }}</span>
-                <span class="text-xs text-foreground-muted">{{ fun.experiments.length }} experiments in total</span>
+                <span class="text-xs text-foreground-muted">of {{ fun.experiments.length }} experiments</span>
               </div>
             </PDSCard>
             <PDSCard appearance="outlined">
               <div class="flex flex-col gap-1">
-                <span class="eyebrow">Ideas ready</span>
+                <span class="eyebrow">Ideas waiting</span>
                 <span class="text-3xl font-semibold leading-none tabular-nums">{{ readyIdeas }}</span>
                 <span class="text-xs text-foreground-muted">research {{ fun.lastResearchAt ? relativeTime(fun.lastResearchAt) : 'not run yet' }}</span>
               </div>
             </PDSCard>
           </div>
           <p class="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm">
-            <span class="text-foreground-muted">Everything in lab/main:</span>
+            <span class="text-foreground-muted">See all lab work running:</span>
             <a
               v-for="p in fun.previews"
               :key="p.app"

@@ -180,7 +180,7 @@ async function acceptFence() {
               </template>
             </template>
             <template v-else>
-              no worker running
+              nothing running
             </template>
           </dd>
           <dt class="text-foreground-muted">

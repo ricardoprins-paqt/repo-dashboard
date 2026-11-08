@@ -87,7 +87,7 @@ function setFilter(next: RepoFilter) {
               · {{ overview.viewer }}
             </template>
           </template><template v-if="autoRefresh">
-            · auto-refresh on
+            · refreshes every minute
           </template>
         </template>
       </template>
@@ -214,7 +214,7 @@ function setFilter(next: RepoFilter) {
             id="actions-heading"
             class="text-sm font-semibold"
           >
-            What needs a decision <span class="font-normal text-foreground-muted">({{ actionItems.length }})</span>
+            Needs a decision <span class="font-normal text-foreground-muted">({{ actionItems.length }})</span>
           </h2>
           <PDSButton
             v-if="actionItems.length > ACTION_PREVIEW"
@@ -337,8 +337,8 @@ function setFilter(next: RepoFilter) {
     </main>
 
     <footer class="mx-auto flex w-full max-w-[84rem] flex-wrap justify-between gap-2 px-4 py-8 text-xs text-foreground-muted sm:px-8">
-      <span>Watching {{ overview?.roots.join(', ') ?? '…' }}</span>
-      <span>Read-only, except “Fetch from remotes”.</span>
+      <span>Repositories in {{ overview?.roots.join(' and ') ?? '…' }}</span>
+      <span>This page only reads; “Fetch from remotes” is the one thing it changes.</span>
     </footer>
 
     <PDSSlideover v-model:open="detailOpen">

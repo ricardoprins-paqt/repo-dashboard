@@ -369,7 +369,7 @@ function sessionTitle(s: SessionTile) {
           <NuxtLink
             to="/summary"
             class="underline"
-          >FYIs: today's summary<template v-if="hiddenFyis"> ({{ hiddenFyis }} not summarised yet)</template></NuxtLink>
+          >FYIs are in the daily summary<template v-if="hiddenFyis"> ({{ hiddenFyis }} not in it yet)</template></NuxtLink>
         </p>
         <p
           v-if="!hasFocusedCards"

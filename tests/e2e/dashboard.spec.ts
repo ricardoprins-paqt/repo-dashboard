@@ -20,7 +20,7 @@ test('shows the summary, the decision list and every repository', async ({ page 
   await expect(page.getByRole('button', { name: 'Open details for widgets' })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Open details for gadgets' })).toBeVisible()
 
-  const decisions = page.getByRole('region', { name: /What needs a decision/ })
+  const decisions = page.getByRole('region', { name: /Needs a decision/ })
   await expect(decisions).toContainText('CI is failing on develop')
   await expect(decisions).toContainText('2 commits not pushed')
   await expect(decisions).toContainText('Session 4: Branch feature/signup is not pushed anywhere')

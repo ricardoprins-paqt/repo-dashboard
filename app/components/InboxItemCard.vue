@@ -50,43 +50,46 @@ function send() {
     :color="item.severity === 'critical' ? 'danger' : undefined"
     :data-testid="`inbox-item-${item.id}`"
   >
-    <div class="flex flex-col gap-2">
-      <div class="flex flex-wrap items-center gap-2">
-        <PDSBadge
-          v-if="item.severity === 'critical'"
-          size="sm"
-          appearance="solid"
-          color="danger"
-        >
-          Critical
-        </PDSBadge>
-        <PDSBadge
-          size="sm"
-          appearance="subtle"
-          :color="KIND[item.kind]?.color"
-        >
-          {{ KIND[item.kind]?.label ?? item.kind }}
-        </PDSBadge>
-        <span class="text-xs text-foreground-muted">
+    <div class="flex flex-col gap-3">
+      <div class="flex flex-col gap-1.5">
+        <div class="flex flex-wrap items-center gap-2">
+          <PDSBadge
+            v-if="item.severity === 'critical'"
+            size="sm"
+            appearance="solid"
+            color="danger"
+          >
+            Critical
+          </PDSBadge>
+          <PDSBadge
+            size="sm"
+            appearance="subtle"
+            :color="KIND[item.kind]?.color"
+          >
+            {{ KIND[item.kind]?.label ?? item.kind }}
+          </PDSBadge>
           <a
             :href="`#I-${item.id}`"
-            class="font-mono font-semibold text-foreground"
+            class="font-mono text-xs font-semibold text-foreground-muted hover:text-foreground"
             :title="`Link to this card (I-${item.id})`"
           >I-{{ item.id }}</a>
-          · T-{{ task.id }} {{ task.title }} · session {{ task.session ?? '?' }} · <RelativeTime :at="item.created" /><template v-if="cardTitle">
+          <span class="ml-auto text-xs text-foreground-muted"><RelativeTime :at="item.created" /></span>
+        </div>
+        <h3 class="font-semibold">
+          <LinkedText :text="item.title" />
+        </h3>
+        <p class="text-xs text-foreground-muted">
+          Session {{ task.session ?? '?' }} · {{ task.title }}<template v-if="cardTitle">
             · card: <NuxtLink
               to="/focus"
               class="underline"
             >{{ cardTitle }}</NuxtLink>
           </template>
-        </span>
+        </p>
       </div>
-      <h3 class="font-semibold">
-        <LinkedText :text="item.title" />
-      </h3>
       <p
         v-if="item.body"
-        class="whitespace-pre-line text-sm"
+        class="max-w-prose whitespace-pre-line text-sm"
       >
         <LinkedText
           :text="item.body"
@@ -143,7 +146,7 @@ function send() {
       <template v-else>
         <div
           v-if="answerable"
-          class="flex flex-col gap-2 pt-1"
+          class="flex flex-col gap-2"
         >
           <div
             v-if="item.options.length"
@@ -168,7 +171,7 @@ function send() {
               v-model="backlog"
               type="checkbox"
             >
-            Add to backlog: do it at a later tick, not now
+            Add it to the backlog instead of doing it now
           </label>
           <form
             class="flex gap-2"
@@ -176,7 +179,7 @@ function send() {
           >
             <input
               v-model="text"
-              class="min-w-0 flex-1 rounded border border-border bg-surface px-3 py-1.5 text-sm"
+              class="min-w-0 flex-1 rounded-control border border-border bg-surface px-3 py-1.5 text-base sm:text-sm"
               :aria-label="`Your answer to: ${item.title}`"
               :placeholder="item.options.length ? 'Or write your own answer…' : 'Your answer…'"
             >
@@ -190,7 +193,7 @@ function send() {
             </PDSButton>
           </form>
         </div>
-        <div class="flex flex-wrap gap-2 pt-1">
+        <div class="flex flex-wrap gap-2">
           <PDSButton
             size="sm"
             :appearance="answerable ? 'plain' : 'outlined'"
@@ -205,7 +208,7 @@ function send() {
             :disabled="busy"
             @click="emit('snooze')"
           >
-            Tomorrow
+            Remind me tomorrow
           </PDSButton>
         </div>
       </template>

@@ -60,7 +60,7 @@ function onSelect(event: CustomEvent<{ id: string, checked?: boolean }>) {
     <StatusServiceBanner />
     <DataSyncBanner />
     <header class="border-b border-border bg-surface">
-      <div class="mx-auto flex w-full max-w-[84rem] flex-wrap items-center gap-x-6 gap-y-3 px-4 py-3 sm:px-8">
+      <div class="mx-auto flex w-full max-w-[84rem] flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3 sm:flex-nowrap sm:px-8">
         <NuxtLink
           to="/"
           class="flex shrink-0"
@@ -79,7 +79,7 @@ function onSelect(event: CustomEvent<{ id: string, checked?: boolean }>) {
           aria-hidden="true"
         />
         <div class="min-w-0">
-          <h1 class="text-base font-semibold leading-tight">
+          <h1 class="text-lg font-semibold">
             {{ title }}
           </h1>
           <p
@@ -89,20 +89,23 @@ function onSelect(event: CustomEvent<{ id: string, checked?: boolean }>) {
             <slot name="subtitle" />
           </p>
         </div>
+        <!-- Small screens: the pages get their own row that scrolls sideways, so the header stays two lines at most. -->
         <nav
-          class="ml-auto flex flex-wrap items-center gap-4"
+          class="order-last -mx-1 flex w-full items-center gap-x-6 overflow-x-auto px-1 sm:order-none sm:mx-0 sm:ml-auto sm:w-auto sm:px-0"
           aria-label="Pages"
         >
           <NuxtLink
             v-for="page in PAGES"
             :key="page.to"
             :to="page.to"
-            class="text-sm underline-offset-4 hover:underline"
-            :class="isCurrent(page.to) ? 'font-semibold underline' : 'text-foreground-muted'"
+            class="whitespace-nowrap py-1 text-sm font-medium underline-offset-[6px] transition-colors hover:text-foreground"
+            :class="isCurrent(page.to) ? 'text-foreground underline decoration-2' : 'text-foreground-muted'"
             :aria-current="route.path === page.to ? 'page' : undefined"
           >
             {{ page.label }}
           </NuxtLink>
+        </nav>
+        <div class="ml-auto sm:ml-0">
           <!-- Client only: the menu's checked states depend on the theme, which the server cannot know. -->
           <ClientOnly>
             <PDSDropdownMenu
@@ -123,7 +126,7 @@ function onSelect(event: CustomEvent<{ id: string, checked?: boolean }>) {
               </template>
             </PDSDropdownMenu>
           </ClientOnly>
-        </nav>
+        </div>
       </div>
     </header>
   </div>

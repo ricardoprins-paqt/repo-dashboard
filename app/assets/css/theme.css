@@ -41,3 +41,16 @@ pds-rating[size='sm'] {
   --pds-rating-star-size: 1.125rem;
   --pds-rating-gap: 0.0625rem;
 }
+
+/*
+ * Small buttons (size="sm"): the actions in cards and rows. PDS leaves sizes to the theme, and core's theme.css has no
+ * size recipe, so without this a small button rendered at full size (16px text, 36px tall) next to 14px body text.
+ */
+pds-button[size='sm'] {
+  --pds-button-font-size: var(--text-sm, 0.875rem);
+  --pds-button-icon-size: 1rem;
+  --pds-button-icon-gap: 0.375rem;
+  --pds-button-min-block-size: 2rem;
+  --pds-button-padding-block: 0.25rem;
+  --pds-button-padding-inline: 0.75rem;
+}

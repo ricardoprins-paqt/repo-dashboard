@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { PDSExpCallout } from '@paqtdesign/experimental/vue'
+import { PDSCallout } from '@paqtdesign/vue'
 import type { RepoStatus } from '#shared/types/repo'
 
 const { overview, loading, githubLoading, fetching, error, autoRefresh, load, fetchRemotes } = useRepoOverview()
@@ -98,7 +98,7 @@ function setFilter(next: RepoFilter) {
       class="mx-auto flex w-full max-w-[84rem] flex-col gap-12 px-4 py-8 sm:px-8"
     >
       <!-- Persistent state (the data may be stale), so a callout rather than a toast. -->
-      <PDSExpCallout
+      <PDSCallout
         v-if="error"
         color="danger"
         appearance="subtle"
@@ -120,7 +120,7 @@ function setFilter(next: RepoFilter) {
             Try again
           </PDSButton>
         </template>
-      </PDSExpCallout>
+      </PDSCallout>
 
       <section
         v-if="hasContent"

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { PDSExpCallout } from '@paqtdesign/experimental/vue'
+import { PDSCallout } from '@paqtdesign/vue'
 import type { InboxOverview, InboxTask, ItemKind, TaskStatus } from '#shared/types/inbox'
 
 useHead({ title: 'Inbox · Repo Dashboard' })
@@ -332,7 +332,7 @@ function sessionTitle(s: SessionTile) {
             {{ allShown ? 'Click a type to see only that one; ⌘/Ctrl-click to add another' : 'Click it again for all types · ⌘/Ctrl-click to add or remove one' }}
           </span>
         </div>
-        <PDSExpCallout
+        <PDSCallout
           v-if="waitingLine"
           appearance="subtle"
           color="info"
@@ -353,7 +353,7 @@ function sessionTitle(s: SessionTile) {
               </template>
             </span>
           </template>
-        </PDSExpCallout>
+        </PDSCallout>
         <p
           v-if="anchorNotice"
           role="status"

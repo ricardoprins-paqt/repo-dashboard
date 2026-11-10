@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { PDSExpCollapsible } from '@paqtdesign/experimental/vue'
+import { PDSCollapsible } from '@paqtdesign/vue'
 import type { AchievementsResponse, SummariesResponse } from '#shared/types/focus'
 
 useHead({ title: 'Daily summary · Repo Dashboard' })
@@ -120,7 +120,7 @@ onBeforeUnmount(() => clearInterval(timer))
             class="markdown markdown-nested text-sm"
             v-html="d.highlightsHtml"
           />
-          <PDSExpCollapsible
+          <PDSCollapsible
             v-if="d.itemHtml.length"
             :label="`Everything done that day (${d.itemHtml.length})`"
           >
@@ -131,7 +131,7 @@ onBeforeUnmount(() => clearInterval(timer))
                 v-html="html"
               />
             </ul>
-          </PDSExpCollapsible>
+          </PDSCollapsible>
           <!-- eslint-enable vue/no-v-html -->
           <p class="text-xs text-foreground-muted">
             Covers until {{ timeOf(d.achievement.covered_until) }}

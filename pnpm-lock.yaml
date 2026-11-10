@@ -15,17 +15,17 @@ importers:
         specifier: ^5.3.0
         version: 5.3.0
       '@paqtdesign/core':
-        specifier: 1.8.1
-        version: 1.8.1
+        specifier: 1.10.1
+        version: 1.10.1(vue@3.5.43(typescript@5.9.3))
       '@paqtdesign/experimental':
-        specifier: 1.5.0
-        version: 1.5.0(@floating-ui/dom@1.8.0)(@paqtdesign/core@1.8.1)(lit@3.3.3)(vue@3.5.43(typescript@5.9.3))
+        specifier: 1.7.0
+        version: 1.7.0(@paqtdesign/core@1.10.1(vue@3.5.43(typescript@5.9.3)))(lit@3.3.3)(vue@3.5.43(typescript@5.9.3))
       '@paqtdesign/nuxt':
-        specifier: 1.0.0
-        version: 1.0.0(@paqtdesign/core@1.8.1)(@paqtdesign/vue@1.8.1(typescript@5.9.3)(vue@3.5.43(typescript@5.9.3)))(confbox@0.3.1)(dotenv@17.4.2)(giget@3.3.1)(jiti@2.7.0)(magic-string@1.4.3)(mlly@1.8.2)(rolldown@1.2.13)(unplugin@3.4.0(esbuild@0.28.2)(rolldown@1.2.13)(rollup@4.64.5)(vite@8.3.4(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(yaml@2.9.1)))
+        specifier: 1.1.2
+        version: 1.1.2(@paqtdesign/core@1.10.1(vue@3.5.43(typescript@5.9.3)))(@paqtdesign/experimental@1.7.0(@paqtdesign/core@1.10.1(vue@3.5.43(typescript@5.9.3)))(lit@3.3.3)(vue@3.5.43(typescript@5.9.3)))(@paqtdesign/vue@1.10.1(typescript@5.9.3)(vue@3.5.43(typescript@5.9.3)))(confbox@0.3.1)(dotenv@17.4.2)(giget@3.3.1)(jiti@2.7.0)(magic-string@1.4.3)(mlly@1.8.2)(rolldown@1.2.13)(unplugin@3.4.0(esbuild@0.28.2)(rolldown@1.2.13)(rollup@4.64.5)(vite@8.3.4(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(yaml@2.9.1)))
       '@paqtdesign/vue':
-        specifier: 1.8.1
-        version: 1.8.1(typescript@5.9.3)(vue@3.5.43(typescript@5.9.3))
+        specifier: 1.10.1
+        version: 1.10.1(typescript@5.9.3)(vue@3.5.43(typescript@5.9.3))
       linkify-it:
         specifier: 6.1.0
         version: 6.1.0
@@ -846,27 +846,29 @@ packages:
   '@oxc-project/types@0.153.0':
     resolution: {integrity: sha512-jSNrRIyvPVLL5E1z/tS5zLAprosGz/FuI1PWwEOz59j3E4TTTzSpqKb/RDGqJhhW0QHYISGXxq582wGx6T11Tw==}
 
-  '@paqtdesign/core@1.8.1':
-    resolution: {integrity: sha512-lABbo2AavYNHC1Yqrf+XKMhhL/Y1psIfuBzb6oheuC9zOnC0BtRtnJON35XZOl13BnAsQkhKdsJgzGNGWZJlCw==, tarball: https://npm.pkg.github.com/download/@paqtdesign/core/1.8.1/a440780a22f789e9eff152b3e11ff32b8035aac2}
-
-  '@paqtdesign/experimental@1.5.0':
-    resolution: {integrity: sha512-dcfNO5hv00stPiKmMOJeuDFXK50HVuBD3yX77G7+ENjNfU4ZBRZ9SZhn1PWA5En6HUh6jiwSr6o4OLKBmc/R2g==, tarball: https://npm.pkg.github.com/download/@paqtdesign/experimental/1.5.0/eb064eabf2afa7842d5c8bc582a2aa5970573ea7}
+  '@paqtdesign/core@1.10.1':
+    resolution: {integrity: sha512-Hsln2gJcxRlspGWzgXf1j0hhd9PR3CmDey1GlUUqnCuLR1FaFHRNLr4c4raSuvBVwOCrdDRFNxK5o6whA/K73g==, tarball: https://npm.pkg.github.com/download/@paqtdesign/core/1.10.1/8017a767b0e7d37e4348b10d6e74c57bd9563c4f}
     peerDependencies:
-      '@floating-ui/dom': ^1.7.6
-      '@paqtdesign/core': '>=1.0.0'
+      vue: ^3.2.0
+
+  '@paqtdesign/experimental@1.7.0':
+    resolution: {integrity: sha512-PsME0nChVODdmmj1R3p1ClQ1Ur2aKB+tpD3sDvVuYciRAgWIwDUhNQFKeKOqLGKtczufGPb6ggNDXnfa8TKvgg==, tarball: https://npm.pkg.github.com/download/@paqtdesign/experimental/1.7.0/76b90e9419f83258198f1993a8c6c66dda190c6d}
+    peerDependencies:
+      '@paqtdesign/core': ^1.10.0
       lit: ^3.0.0
       vue: ^3.5.0
 
-  '@paqtdesign/nuxt@1.0.0':
-    resolution: {integrity: sha512-txfjG777OFgfqy8/BZ/MotqIN7uj8F4LRfeIz3G5awVJ68fYBC83PBwXz/7ZouoYFiEyWQMYmM6M9aehMimbwA==, tarball: https://npm.pkg.github.com/download/@paqtdesign/nuxt/1.0.0/e1e266ebf495d0a66c2ad2fe9f2021393b50bd50}
+  '@paqtdesign/nuxt@1.1.2':
+    resolution: {integrity: sha512-sYOLWztqi5eQziO3io8SAbC1obrZo7tMBNd59kqo0UVearct9fJcjSKSHHBfvqhYZkU4lnyAfVwkkfAzxR80ug==, tarball: https://npm.pkg.github.com/download/@paqtdesign/nuxt/1.1.2/d235399c85388dca3b21a146907625a8a79e7f01}
     peerDependencies:
       '@paqtdesign/core': ^1.4.2
-      '@paqtdesign/vue': ^1.4.2
+      '@paqtdesign/experimental': ^1.6.0
+      '@paqtdesign/vue': ^1.9.0
 
-  '@paqtdesign/vue@1.8.1':
-    resolution: {integrity: sha512-aelUMva/GGDbJlo2AY/6Y+qePamt6FpvFb7h7DC/PbGRHm8WTBQ0c/oQq4Ee2/aVvFuSidYO2hWhSYaPfceeOQ==, tarball: https://npm.pkg.github.com/download/@paqtdesign/vue/1.8.1/5c7b18e5818a7c1f4a4d055af3f8b98c4400f86e}
+  '@paqtdesign/vue@1.10.1':
+    resolution: {integrity: sha512-cxyOEX9YNTleNB0qyBaTKpjSJTjvVE9w4YeUZsmeVEc8Kd93U+gZz+FBYV2XgojAkdlyrW5EUMsnF+X9svmsOw==, tarball: https://npm.pkg.github.com/download/@paqtdesign/vue/1.10.1/78d21d31ae7c246702346348a0d326d6c391b0e2}
     peerDependencies:
-      vue: ^3.2.0
+      vue: ^3.5.0
 
   '@parcel/watcher-wasm@2.6.0':
     resolution: {integrity: sha512-dtjbDxKSDPQ8AmA+pS4OFaHE1FKrjtGpLGBxw85uKFkRorjNbvDM/aFPgqosu40wprbp1xw2ZSxIKqghCUHe2w==}
@@ -5799,27 +5801,30 @@ snapshots:
 
   '@oxc-project/types@0.153.0': {}
 
-  '@paqtdesign/core@1.8.1':
+  '@paqtdesign/core@1.10.1(vue@3.5.43(typescript@5.9.3))':
     dependencies:
       '@floating-ui/dom': 1.8.0
       country-flag-icons: 1.6.20
       iconify-icon: 3.0.3
       libphonenumber-js: 1.13.15
       lit: 3.3.3
-
-  '@paqtdesign/experimental@1.5.0(@floating-ui/dom@1.8.0)(@paqtdesign/core@1.8.1)(lit@3.3.3)(vue@3.5.43(typescript@5.9.3))':
-    dependencies:
-      '@floating-ui/dom': 1.8.0
-      '@paqtdesign/core': 1.8.1
-      lit: 3.3.3
+      uqr: 0.1.3
       vue: 3.5.43(typescript@5.9.3)
 
-  '@paqtdesign/nuxt@1.0.0(@paqtdesign/core@1.8.1)(@paqtdesign/vue@1.8.1(typescript@5.9.3)(vue@3.5.43(typescript@5.9.3)))(confbox@0.3.1)(dotenv@17.4.2)(giget@3.3.1)(jiti@2.7.0)(magic-string@1.4.3)(mlly@1.8.2)(rolldown@1.2.13)(unplugin@3.4.0(esbuild@0.28.2)(rolldown@1.2.13)(rollup@4.64.5)(vite@8.3.4(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(yaml@2.9.1)))':
+  '@paqtdesign/experimental@1.7.0(@paqtdesign/core@1.10.1(vue@3.5.43(typescript@5.9.3)))(lit@3.3.3)(vue@3.5.43(typescript@5.9.3))':
+    dependencies:
+      '@paqtdesign/core': 1.10.1(vue@3.5.43(typescript@5.9.3))
+      lit: 3.3.3
+      uqr: 0.1.3
+      vue: 3.5.43(typescript@5.9.3)
+
+  '@paqtdesign/nuxt@1.1.2(@paqtdesign/core@1.10.1(vue@3.5.43(typescript@5.9.3)))(@paqtdesign/experimental@1.7.0(@paqtdesign/core@1.10.1(vue@3.5.43(typescript@5.9.3)))(lit@3.3.3)(vue@3.5.43(typescript@5.9.3)))(@paqtdesign/vue@1.10.1(typescript@5.9.3)(vue@3.5.43(typescript@5.9.3)))(confbox@0.3.1)(dotenv@17.4.2)(giget@3.3.1)(jiti@2.7.0)(magic-string@1.4.3)(mlly@1.8.2)(rolldown@1.2.13)(unplugin@3.4.0(esbuild@0.28.2)(rolldown@1.2.13)(rollup@4.64.5)(vite@8.3.4(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(yaml@2.9.1)))':
     dependencies:
       '@nuxt/kit': 4.6.1(@nuxt/schema@4.6.1)(confbox@0.3.1)(dotenv@17.4.2)(giget@3.3.1)(jiti@2.7.0)(magic-string@1.4.3)(mlly@1.8.2)(rolldown@1.2.13)(unplugin@3.4.0(esbuild@0.28.2)(rolldown@1.2.13)(rollup@4.64.5)(vite@8.3.4(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(yaml@2.9.1)))
       '@nuxt/schema': 4.6.1
-      '@paqtdesign/core': 1.8.1
-      '@paqtdesign/vue': 1.8.1(typescript@5.9.3)(vue@3.5.43(typescript@5.9.3))
+      '@paqtdesign/core': 1.10.1(vue@3.5.43(typescript@5.9.3))
+      '@paqtdesign/experimental': 1.7.0(@paqtdesign/core@1.10.1(vue@3.5.43(typescript@5.9.3)))(lit@3.3.3)(vue@3.5.43(typescript@5.9.3))
+      '@paqtdesign/vue': 1.10.1(typescript@5.9.3)(vue@3.5.43(typescript@5.9.3))
     transitivePeerDependencies:
       - confbox
       - dotenv
@@ -5831,10 +5836,10 @@ snapshots:
       - rolldown
       - unplugin
 
-  '@paqtdesign/vue@1.8.1(typescript@5.9.3)(vue@3.5.43(typescript@5.9.3))':
+  '@paqtdesign/vue@1.10.1(typescript@5.9.3)(vue@3.5.43(typescript@5.9.3))':
     dependencies:
       '@lit-labs/vue-utils': 0.1.3(typescript@5.9.3)
-      '@paqtdesign/core': 1.8.1
+      '@paqtdesign/core': 1.10.1(vue@3.5.43(typescript@5.9.3))
       vue: 3.5.43(typescript@5.9.3)
     transitivePeerDependencies:
       - typescript

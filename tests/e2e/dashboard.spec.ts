@@ -76,7 +76,7 @@ test('shows an alert callout when the overview cannot be loaded, and lets you di
   await page.route('**/api/repos**', route => route.fulfill({ status: 500, json: { statusMessage: 'git is not installed' } }))
   await page.goto('/')
 
-  const callout = page.locator('pds-exp-callout')
+  const callout = page.locator('pds-callout')
   await expect(callout).toBeVisible()
   await expect(callout).toContainText('Could not load the overview')
   await expect(callout).toContainText('git is not installed')

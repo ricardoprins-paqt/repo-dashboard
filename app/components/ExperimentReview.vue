@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { PDSExpCollapsible } from '@paqtdesign/experimental/vue'
+import { PDSCollapsible } from '@paqtdesign/vue'
 import type { LabExperiment, LabFeedback, LabReview } from '#shared/types/lab'
 
 /**
@@ -45,7 +45,7 @@ async function act(kind: 'like' | 'reject' | 'note') {
       · session {{ review.session }}
     </template>
   </p>
-  <PDSExpCollapsible
+  <PDSCollapsible
     v-else
     :label="open.length ? 'Your verdict (being handled)' : 'Like or reject'"
     :data-testid="`review-${experiment.id}`"
@@ -110,5 +110,5 @@ async function act(kind: 'like' | 'reject' | 'note') {
         {{ error }}
       </p>
     </div>
-  </PDSExpCollapsible>
+  </PDSCollapsible>
 </template>

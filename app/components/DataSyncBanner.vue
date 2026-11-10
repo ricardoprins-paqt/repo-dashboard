@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { PDSExpCallout } from '@paqtdesign/experimental/vue'
+import { PDSCallout } from '@paqtdesign/vue'
 
 // A warning (in the sticky AppHeader) while library-comparison's data sync needs a person: its data/jira.json or plans/ did not reach git.
 interface SyncState { available: boolean, url: string, problem?: string | null, root?: string, unpushed?: number, pending?: number }
@@ -39,7 +39,7 @@ onBeforeUnmount(() => {
     class="border-b border-border bg-surface px-4 py-2 sm:px-8"
     data-testid="data-sync-banner"
   >
-    <PDSExpCallout
+    <PDSCallout
       color="danger"
       appearance="subtle"
       icon="lucide:git-branch"
@@ -55,6 +55,6 @@ onBeforeUnmount(() => {
           class="underline"
         >Open library-comparison</a>
       </template>
-    </PDSExpCallout>
+    </PDSCallout>
   </div>
 </template>

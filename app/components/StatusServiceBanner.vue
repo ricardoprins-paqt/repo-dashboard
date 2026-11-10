@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { PDSExpCallout } from '@paqtdesign/experimental/vue'
+import { PDSCallout } from '@paqtdesign/vue'
 
 // A banner while the lss-tools status service is down or unhealthy: the inbox, loops and session data come from it. Its
 // watchdog (paqt-health) restarts it within minutes; this makes sure an outage is visible, not a quietly empty page.
@@ -21,7 +21,7 @@ onBeforeUnmount(() => clearInterval(timer))
     class="border-b border-border bg-surface px-4 py-2 sm:px-8"
     data-testid="status-service-banner"
   >
-    <PDSExpCallout
+    <PDSCallout
       color="danger"
       appearance="subtle"
       icon="lucide:server-crash"

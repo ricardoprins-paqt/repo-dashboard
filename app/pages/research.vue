@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { PDSExpCallout } from '@paqtdesign/experimental/vue'
+import { PDSCallout } from '@paqtdesign/vue'
 import type { ResearchResponse } from '#shared/types/research'
 
 useHead({ title: 'Research · Repo Dashboard' })
@@ -85,7 +85,7 @@ async function acceptFence() {
         {{ actionError }}
       </p>
 
-      <PDSExpCallout
+      <PDSCallout
         v-if="loop && !loop.fenceOk"
         appearance="subtle"
         color="danger"
@@ -126,7 +126,7 @@ async function acceptFence() {
             </span>
           </span>
         </template>
-      </PDSExpCallout>
+      </PDSCallout>
 
       <section
         aria-labelledby="now-heading"

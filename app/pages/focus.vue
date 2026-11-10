@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { PDSExpCallout } from '@paqtdesign/experimental/vue'
+import { PDSCallout } from '@paqtdesign/vue'
 import type { Card, CardLink, CardsResponse, FocusPrsResponse, FocusReposResponse } from '#shared/types/focus'
 import type { InboxOverview } from '#shared/types/inbox'
 
@@ -265,7 +265,7 @@ const unavailable = computed(() => [cardsData.value, reposData.value].find(d => 
             {{ prsStatus === 'pending' ? 'Loading…' : 'Refresh' }}
           </PDSButton>
         </div>
-        <PDSExpCallout
+        <PDSCallout
           appearance="subtle"
           color="info"
           icon="lucide:shield-check"
